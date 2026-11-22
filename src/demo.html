@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>@micropasts/iiif-manifest-summary — IIIF Summary Demo</title>
+  <script>
+    (function () {
+      const saved = localStorage.getItem('iiif-demo-theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (saved === 'dark' || (!saved && prefersDark)) {
+        document.documentElement.classList.add('dark');
+      }
+    })();
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class' };
+  </script>
+</head>
+<body class="bg-stone-50 text-stone-900 dark:bg-zinc-950 dark:text-zinc-100 min-h-screen transition-colors">
+  <div class="max-w-5xl mx-auto px-6 py-10 space-y-10">
+
+    <header class="flex flex-wrap items-start justify-between gap-4 border-b border-stone-200 dark:border-zinc-800 pb-6">
+      <div>
+        <div class="text-xs font-mono uppercase tracking-wider text-sky-700 dark:text-sky-400 mb-1">
+          @micropasts/iiif-manifest-summary · IIIF v2 &amp; v3
+        </div>
+        <h1 class="text-3xl font-bold tracking-tight">IIIF Manifest Summary</h1>
+        <p class="text-sm text-stone-600 dark:text-zinc-400 mt-1.5 max-w-2xl">
+          Display compact manifest cards with title, summary, rights, canvas counts, and metadata without loading a heavy viewer.
+        </p>
+      </div>
+      <button id="theme-toggle" type="button"
+        class="rounded-md border border-stone-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-stone-800 dark:text-zinc-200 px-3 py-1.5 text-xs font-medium hover:bg-stone-100 dark:hover:bg-zinc-800">
+        Toggle Dark Mode
+      </button>
+    </header>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <section class="space-y-2">
+        <h2 class="text-xs font-semibold uppercase tracking-wider text-stone-600 dark:text-zinc-400">
+          1. Tailwind Light-DOM (&lt;iiif-manifest-summary-tw&gt;)
+        </h2>
+        <iiif-manifest-summary-tw manifest="https://media.getty.edu/iiif/manifest/3/894335b9-570a-4c70-a8d5-97b71f783333"></iiif-manifest-summary-tw>
+      </section>
+
+      <section class="space-y-2">
+        <h2 class="text-xs font-semibold uppercase tracking-wider text-stone-600 dark:text-zinc-400">
+          2. Shadow DOM (&lt;iiif-manifest-summary&gt;)
+        </h2>
+        <iiif-manifest-summary manifest="https://media.getty.edu/iiif/manifest/3/c13cef03-b7bc-43e4-ae97-cef200bb47a3"></iiif-manifest-summary>
+      </section>
+    </div>
+
+  </div>
+
+  <script type="module">
+    import { seedManifest } from './iiif-manifest-summary.esm.js';
+
+    // Seed sample IIIF v3 and v2 manifests so the demo renders reliably even offline/in sandboxes
+    seedManifest('https://example.org/iiif/book-1/manifest.json', {
+      '@context': 'http://iiif.io/api/presentation/3/context.json',
+      id: 'https://example.org/iiif/book-1/manifest.json',
+      type: 'Manifest',
+      label: { en: ['Antiquarian Topography of Hertfordshire (1728)'] },
+      summary: { en: ['Illustrated parish notes, Roman roads, and earthwork observations.'] },
+      rights: 'http://creativecommons.org/licenses/by/4.0/',
+      metadata: [
+        { label: { en: ['Repository'] }, value: { en: ['County Archive'] } },
+        { label: { en: ['Shelfmark'] }, value: { en: ['MS TOPO 14'] } },
+      ],
+      items: [
+        { id: 'https://example.org/iiif/book-1/canvas/1', type: 'Canvas' },
+        { id: 'https://example.org/iiif/book-1/canvas/2', type: 'Canvas' },
+        { id: 'https://example.org/iiif/book-1/canvas/3', type: 'Canvas' },
+      ],
+    });
+
+    seedManifest('https://example.org/iiif/coin-2/manifest.json', {
+      '@context': 'http://iiif.io/api/presentation/2/context.json',
+      '@id': 'https://example.org/iiif/coin-2/manifest.json',
+      '@type': 'sc:Manifest',
+      label: 'Silver Denarius of Hadrian (RIC II.3 412)',
+      description: 'Obverse and reverse multi-angle capture of Roman imperial silver coin.',
+      license: 'https://creativecommons.org/publicdomain/mark/1.0/',
+      metadata: [
+        { label: 'Mint', value: 'Rome' },
+        { label: 'Metal', value: 'Silver' },
+      ],
+      sequences: [{ canvases: [{ '@id': 'c1' }, { '@id': 'c2' }] }],
+    });
+
+    // Trigger load for already-connected elements after seeding
+    document.querySelectorAll('iiif-manifest-summary-tw, iiif-manifest-summary').forEach((el) => {
+      const m = el.getAttribute('manifest');
+      if (m && typeof el.load === 'function') el.load(m);
+    });
+
+    document.getElementById('theme-toggle').addEventListener('click', () => {
+      const isDark = document.documentElement.classList.toggle('dark');
+      localStorage.setItem('iiif-demo-theme', isDark ? 'dark' : 'light');
+    });
+  </script>
+</body>
+</html>
