@@ -224,7 +224,7 @@ The listener is added on `connectedCallback()` and removed on `disconnectedCallb
 
 ## Selection event
 
-Both components dispatch a bubbling, composed `heritage:select` event when Select is clicked. `composed: true` allows the event to cross the shadow-DOM boundary.
+Both components dispatch a bubbling, composed `heritage:select` event when **Inspect** is clicked. `composed: true` allows the event to cross the shadow-DOM boundary.
 
 ```js
 document.addEventListener('heritage:select', (event) => {

@@ -53,6 +53,39 @@
       </section>
     </div>
 
+    <section class="rounded-xl border border-stone-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5" aria-labelledby="selection-title">
+      <div class="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 id="selection-title" class="text-sm font-semibold">Selected manifest</h2>
+          <p class="mt-1 text-xs text-stone-500 dark:text-zinc-400">
+            Listening for <code>heritage:select</code> events
+          </p>
+        </div>
+        <span id="event-status" class="rounded-md bg-stone-100 dark:bg-zinc-800 px-2 py-1 font-mono text-[10px] text-stone-500 dark:text-zinc-400">
+          Waiting
+        </span>
+      </div>
+
+      <dl class="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+        <div>
+          <dt class="text-[10px] font-semibold uppercase tracking-wide text-stone-500 dark:text-zinc-400">Label</dt>
+          <dd id="selected-label" class="mt-0.5 font-medium">No manifest selected</dd>
+        </div>
+        <div>
+          <dt class="text-[10px] font-semibold uppercase tracking-wide text-stone-500 dark:text-zinc-400">Version</dt>
+          <dd id="selected-version" class="mt-0.5">—</dd>
+        </div>
+        <div>
+          <dt class="text-[10px] font-semibold uppercase tracking-wide text-stone-500 dark:text-zinc-400">Canvas count</dt>
+          <dd id="selected-canvases" class="mt-0.5">—</dd>
+        </div>
+        <div class="sm:col-span-2">
+          <dt class="text-[10px] font-semibold uppercase tracking-wide text-stone-500 dark:text-zinc-400">Manifest URI</dt>
+          <dd id="selected-uri" class="mt-0.5 break-all font-mono text-xs text-sky-700 dark:text-sky-400">—</dd>
+        </div>
+      </dl>
+    </section>
+
   </div>
 
   <script type="module">
@@ -95,6 +128,17 @@
     document.querySelectorAll('iiif-manifest-summary-tw, iiif-manifest-summary').forEach((el) => {
       const m = el.getAttribute('manifest');
       if (m && typeof el.load === 'function') el.load(m);
+    });
+
+    document.addEventListener('heritage:select', (event) => {
+      const { uri, label, canvasCount, version } = event.detail || {};
+      document.getElementById('selected-label').textContent = label || 'Untitled Manifest';
+      document.getElementById('selected-version').textContent = version || '—';
+      document.getElementById('selected-canvases').textContent =
+        typeof canvasCount === 'number' ? String(canvasCount) : '—';
+      document.getElementById('selected-uri').textContent = uri || '—';
+      document.getElementById('event-status').textContent =
+        `Received ${new Date().toLocaleTimeString()}`;
     });
 
     document.getElementById('theme-toggle').addEventListener('click', () => {

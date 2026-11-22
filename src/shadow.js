@@ -181,7 +181,7 @@ export class IiifManifestSummary extends HTMLElement {
           <span class="rights" title="${this._esc(d.rights)}">Rights: ${this._esc(d.rightsLabel || d.rights)}</span>
           <div class="btns">
             <button type="button" class="copy-uri" data-uri="${this._esc(d.uri)}">Copy URI</button>
-            <button type="button" class="select-btn">Select</button>
+            <button type="button" class="select-btn">Inspect</button>
           </div>
         </div>
       </div>

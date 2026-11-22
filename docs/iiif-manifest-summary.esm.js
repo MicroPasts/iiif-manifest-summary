@@ -470,7 +470,7 @@ export class IiifManifestSummary extends HTMLElement {
           <span class="rights" title="${this._esc(d.rights)}">Rights: ${this._esc(d.rightsLabel || d.rights)}</span>
           <div class="btns">
             <button type="button" class="copy-uri" data-uri="${this._esc(d.uri)}">Copy URI</button>
-            <button type="button" class="select-btn">Select</button>
+            <button type="button" class="select-btn">Inspect</button>
           </div>
         </div>
       </div>
@@ -613,7 +613,7 @@ export class IiifManifestSummaryTailwind extends HTMLElement {
           <span class="truncate max-w-[200px] text-zinc-500 dark:text-zinc-400" title="${this._esc(d.rights)}">Rights: ${this._esc(d.rightsLabel || d.rights)}</span>
           <div class="flex items-center gap-1.5">
             <button type="button" data-iiif-copy data-uri="${this._esc(d.uri)}" class="${c.btn}">Copy URI</button>
-            <button type="button" data-iiif-select class="${c.btn}">Select</button>
+            <button type="button" data-iiif-select class="${c.btn}">Inspect</button>
           </div>
         </div>
       </div>
