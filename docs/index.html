@@ -6,11 +6,15 @@
   <title>@micropasts/iiif-manifest-summary — IIIF Summary Demo</title>
   <script>
     (function () {
-      const saved = localStorage.getItem('iiif-demo-theme');
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      if (saved === 'dark' || (!saved && prefersDark)) {
-        document.documentElement.classList.add('dark');
-      }
+      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+      const applyTheme = () => {
+        const saved = localStorage.getItem('iiif-demo-theme');
+        document.documentElement.classList.toggle(
+          'dark', saved === 'dark' || (saved !== 'light' && systemTheme.matches)
+        );
+      };
+      applyTheme();
+      systemTheme.addEventListener('change', applyTheme);
     })();
   </script>
   <script src="https://cdn.tailwindcss.com"></script>

@@ -559,7 +559,7 @@ class IiifManifestSummaryTailwind extends HTMLElement {
 
   async load(url) {
     const c = IiifManifestSummaryTailwind.classes;
-    this.innerHTML = `<div class="${c.card} text-xs text-zinc-500 animate-pulse">Loading IIIF manifest summary…</div>`;
+    this.innerHTML = `<div class="${c.card} text-xs text-zinc-500 dark:text-zinc-400 animate-pulse">Loading IIIF manifest summary…</div>`;
     this._data = await fetchManifestSummary(url);
     this._renderData();
   }
@@ -601,7 +601,7 @@ class IiifManifestSummaryTailwind extends HTMLElement {
             ? `<div class="mt-2.5 grid grid-cols-2 gap-2 rounded-md bg-zinc-50 dark:bg-zinc-950/70 p-2 text-xs border border-zinc-200/70 dark:border-zinc-800">${d.metadata
                 .map(
                   (m) =>
-                    `<div><span class="block text-[10px] uppercase tracking-wide text-zinc-500">${this._esc(m.label)}</span><strong class="font-medium text-zinc-900 dark:text-zinc-100">${this._esc(m.value)}</strong></div>`
+                    `<div><span class="block text-[10px] uppercase tracking-wide text-zinc-500 dark:text-zinc-400">${this._esc(m.label)}</span><strong class="font-medium text-zinc-900 dark:text-zinc-100">${this._esc(m.value)}</strong></div>`
                 )
                 .join('')}</div>`
             : ''

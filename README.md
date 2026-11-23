@@ -185,7 +185,20 @@ It is registered globally under `iiif-manifest-summary-tw` when it is not alread
 | `listen` | No | Custom event name | Listens for the named window event and uses `event.detail.manifest` to change manifests. |
 | `card-class` | No | Tailwind/CSS classes | Extra classes appended to the built-in card classes. |
 
-The Tailwind component uses a dark variant for Tailwind's `dark` class strategy and is intended for a Tailwind-enabled page.
+The component's `dark:` utilities follow the host application's Tailwind dark-mode
+configuration. With Tailwind's default media-based strategy, they automatically
+follow the system color scheme, including changes while the page is open. If the
+application configures a class- or selector-based dark variant instead, the
+application is responsible for updating that selector; the component does not
+change the page's theme.
+
+Ensure Tailwind scans the component's source (including dependencies if installed
+from npm), or otherwise includes its utility classes in the generated CSS. For
+example, Tailwind v3 can include
+`./node_modules/@micropasts/iiif-manifest-summary/src/tailwind.js` in its
+`content` configuration; Tailwind v4 can register the same file with `@source`.
+The demo uses a class-based variant, follows system changes until its theme toggle
+is used, and then preserves the chosen theme in local storage.
 
 #### Static Tailwind classes
 
