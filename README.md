@@ -126,6 +126,7 @@ The built-in template exposes the following parts for `::part(...)` styling:
 | `title` | Manifest title |
 | `summary` | Summary text |
 | `meta` | Metadata grid |
+| `rights` | Rights or licence badge |
 
 ```css
 iiif-manifest-summary::part(card) {
@@ -455,6 +456,29 @@ The build script creates:
 - `docs/index.html`
 
 The IIFE build exposes the package API through `window.IiifManifestSummaryLib`.
+
+## Publishing
+
+The package is authored by Daniel Pett and published as
+`@micropasts/iiif-manifest-summary`. To release it:
+
+1. Update the version in `package.json` and `package-lock.json`, run `npm test`
+   and `npm run build`, and commit the changes.
+2. Ensure the repository has an `NPM_TOKEN` Actions secret containing a granular
+   npm access token with publish permission for the `@micropasts` package and
+   permission to bypass 2FA in CI. The npm account must have publishing access.
+3. Publish a GitHub release from that commit with a tag matching the version,
+   such as `v0.1.4`. The workflow tests the release and publishes separately to
+   npm and GitHub Packages. Prereleases use the `next` dist-tag instead of `latest`.
+
+npm publishes are public and include provenance. GitHub Packages has its own
+visibility setting: an organization package administrator must make the package
+public in its GitHub package settings if it is not already public. The workflow's
+`GITHUB_TOKEN` also needs package write access; for an existing package, grant
+this repository Actions access in its package settings if necessary. GitHub's
+npm registry requires authentication even for public packages. If only one
+registry fails, rerun the failed job after correcting access rather than
+republishing the version that succeeded.
 
 ## Browser support
 

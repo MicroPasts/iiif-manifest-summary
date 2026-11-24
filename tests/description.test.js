@@ -95,4 +95,19 @@ for (const Component of [IiifManifestSummary, IiifManifestSummaryTailwind]) {
     assert.match(root.innerHTML, /Short &amp; sweet/);
     assert.doesNotMatch(root.innerHTML, /Read more/);
   });
+
+  test(`${Component.name} renders an escaped rights badge with the original URI`, () => {
+    const component = new Component();
+    const root = component.shadowRoot || component;
+    component._data = summarizeManifest({
+      rights: 'http://creativecommons.org/licenses/cc-by/4.0/?source=a&other=b',
+    });
+    component._renderData();
+    assert.match(root.innerHTML, /title="http:\/\/creativecommons\.org\/licenses\/cc-by\/4\.0\/\?source=a&amp;other=b">Rights: CC BY 4\.0<\/span>/);
+    if (component.shadowRoot) {
+      assert.match(root.innerHTML, /<span part="rights" class="rights"/);
+    } else {
+      assert.match(root.innerHTML, /<span class="inline-block max-w-full break-words rounded border /);
+    }
+  });
 }

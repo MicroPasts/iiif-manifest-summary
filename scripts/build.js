@@ -25,9 +25,10 @@ const coreCode = readSrc('core.js');
 const shadowCode = readSrc('shadow.js');
 const tailwindCode = readSrc('tailwind.js');
 const demoHtml = readSrc('demo.html');
+const { name, version } = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
 
 const banner = `/**
- * @micropasts/iiif-manifest-summary v0.1.0
+ * ${name} v${version}
  * Zero-dependency IIIF Presentation v2/v3 summary Web Components
  * License: MIT
  */\n`;

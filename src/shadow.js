@@ -140,7 +140,7 @@ export class IiifManifestSummary extends HTMLElement {
         .meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 6px; margin: 8px 0; padding: 8px; border-radius: 4px; background: var(--iiif-surface); font-size: 11px; }
         .meta span { display: block; color: var(--iiif-muted); }
         .footer { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; border-top: 1px solid var(--iiif-border); padding-top: 8px; margin-top: 8px; font-size: 11px; }
-        .rights { color: var(--iiif-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 220px; }
+        .rights { display: inline-block; max-width: 100%; box-sizing: border-box; padding: 2px 6px; border: 1px solid var(--iiif-border); border-radius: 4px; background: var(--iiif-surface); color: var(--iiif-fg); font-weight: 500; overflow-wrap: anywhere; }
         .btns { display: flex; gap: 6px; }
         button { font-size: 11px; padding: 3px 8px; border-radius: 4px; border: 1px solid var(--iiif-border); background: transparent; color: inherit; cursor: pointer; }
         button:hover { background: var(--iiif-surface); }
@@ -180,7 +180,7 @@ export class IiifManifestSummary extends HTMLElement {
             : ''
         }
         <div class="footer">
-          <span class="rights" title="${this._esc(d.rights)}">Rights: ${this._esc(d.rightsLabel || d.rights)}</span>
+          <span part="rights" class="rights" title="${this._esc(d.rights)}">Rights: ${this._esc(d.rightsLabel || d.rights)}</span>
           <div class="btns">
             <button type="button" class="copy-uri" data-uri="${this._esc(d.uri)}">Copy URI</button>
             <button type="button" class="select-btn">Inspect</button>

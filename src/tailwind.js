@@ -97,7 +97,7 @@ export class IiifManifestSummaryTailwind extends HTMLElement {
         }
 
         <div class="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-zinc-200 dark:border-zinc-800 pt-2 text-[11px]">
-          <span class="truncate max-w-[200px] text-zinc-500 dark:text-zinc-400" title="${this._esc(d.rights)}">Rights: ${this._esc(d.rightsLabel || d.rights)}</span>
+          <span class="inline-block max-w-full break-words rounded border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 font-medium text-zinc-800 dark:text-zinc-200" title="${this._esc(d.rights)}">Rights: ${this._esc(d.rightsLabel || d.rights)}</span>
           <div class="flex items-center gap-1.5">
             <button type="button" data-iiif-copy data-uri="${this._esc(d.uri)}" class="${c.btn}">Copy URI</button>
             <button type="button" data-iiif-select class="${c.btn}">Inspect</button>

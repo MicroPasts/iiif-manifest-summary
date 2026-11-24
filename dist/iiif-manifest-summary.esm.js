@@ -1,5 +1,5 @@
 /**
- * @micropasts/iiif-manifest-summary v0.1.0
+ * @micropasts/iiif-manifest-summary v0.1.4
  * Zero-dependency IIIF Presentation v2/v3 summary Web Components
  * License: MIT
  */
@@ -434,7 +434,7 @@ export class IiifManifestSummary extends HTMLElement {
         .meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 6px; margin: 8px 0; padding: 8px; border-radius: 4px; background: var(--iiif-surface); font-size: 11px; }
         .meta span { display: block; color: var(--iiif-muted); }
         .footer { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; border-top: 1px solid var(--iiif-border); padding-top: 8px; margin-top: 8px; font-size: 11px; }
-        .rights { color: var(--iiif-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 220px; }
+        .rights { display: inline-block; max-width: 100%; box-sizing: border-box; padding: 2px 6px; border: 1px solid var(--iiif-border); border-radius: 4px; background: var(--iiif-surface); color: var(--iiif-fg); font-weight: 500; overflow-wrap: anywhere; }
         .btns { display: flex; gap: 6px; }
         button { font-size: 11px; padding: 3px 8px; border-radius: 4px; border: 1px solid var(--iiif-border); background: transparent; color: inherit; cursor: pointer; }
         button:hover { background: var(--iiif-surface); }
@@ -474,7 +474,7 @@ export class IiifManifestSummary extends HTMLElement {
             : ''
         }
         <div class="footer">
-          <span class="rights" title="${this._esc(d.rights)}">Rights: ${this._esc(d.rightsLabel || d.rights)}</span>
+          <span part="rights" class="rights" title="${this._esc(d.rights)}">Rights: ${this._esc(d.rightsLabel || d.rights)}</span>
           <div class="btns">
             <button type="button" class="copy-uri" data-uri="${this._esc(d.uri)}">Copy URI</button>
             <button type="button" class="select-btn">Inspect</button>
@@ -626,7 +626,7 @@ export class IiifManifestSummaryTailwind extends HTMLElement {
         }
 
         <div class="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-zinc-200 dark:border-zinc-800 pt-2 text-[11px]">
-          <span class="truncate max-w-[200px] text-zinc-500 dark:text-zinc-400" title="${this._esc(d.rights)}">Rights: ${this._esc(d.rightsLabel || d.rights)}</span>
+          <span class="inline-block max-w-full break-words rounded border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 font-medium text-zinc-800 dark:text-zinc-200" title="${this._esc(d.rights)}">Rights: ${this._esc(d.rightsLabel || d.rights)}</span>
           <div class="flex items-center gap-1.5">
             <button type="button" data-iiif-copy data-uri="${this._esc(d.uri)}" class="${c.btn}">Copy URI</button>
             <button type="button" data-iiif-select class="${c.btn}">Inspect</button>
