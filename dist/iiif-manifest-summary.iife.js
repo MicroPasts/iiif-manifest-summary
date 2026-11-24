@@ -301,7 +301,7 @@ let globalTemplate = null;
 
 class IiifManifestSummary extends HTMLElement {
   static get observedAttributes() {
-    return ['manifest', 'listen'];
+    return ['manifest', 'listen', 'hide-inspect'];
   }
 
   static setTemplate(fn) {
@@ -337,6 +337,12 @@ class IiifManifestSummary extends HTMLElement {
     if (oldVal === newVal || !this.isConnected) return;
     if (name === 'manifest' && newVal) {
       this.load(newVal);
+    } else if (name === 'hide-inspect' && typeof (this.template || globalTemplate) !== 'function') {
+      const button = this.shadowRoot.querySelector('.select-btn');
+      if (button) {
+        button.hidden = newVal !== null;
+        button.style.display = button.hidden ? 'none' : '';
+      }
     }
   }
 
@@ -476,7 +482,7 @@ class IiifManifestSummary extends HTMLElement {
           <span part="rights" class="rights" title="${this._esc(d.rights)}">Rights: ${this._esc(d.rightsLabel || d.rights)}</span>
           <div class="btns">
             <button type="button" class="copy-uri" data-uri="${this._esc(d.uri)}">Copy URI</button>
-            <button type="button" class="select-btn">Inspect</button>
+            <button type="button" class="select-btn"${this.hasAttribute('hide-inspect') ? ' hidden style="display: none"' : ''}>Inspect</button>
           </div>
         </div>
       </div>
@@ -532,6 +538,10 @@ if (!customElements.get('iiif-manifest-summary')) {
 }
 
 class IiifManifestSummaryTailwind extends HTMLElement {
+  static get observedAttributes() {
+    return ['hide-inspect'];
+  }
+
   static classes = {
     card:
       'rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 text-zinc-900 dark:text-zinc-100',
@@ -562,6 +572,15 @@ class IiifManifestSummaryTailwind extends HTMLElement {
     const listenEvent = this.getAttribute('listen');
     if (listenEvent) {
       window.removeEventListener(listenEvent, this._onExternalSelect);
+    }
+  }
+
+  attributeChangedCallback(name, oldVal, newVal) {
+    if (name !== 'hide-inspect' || oldVal === newVal) return;
+    const button = this.querySelector('[data-iiif-select]');
+    if (button) {
+      button.hidden = newVal !== null;
+      button.style.display = button.hidden ? 'none' : '';
     }
   }
 
@@ -627,7 +646,7 @@ class IiifManifestSummaryTailwind extends HTMLElement {
           <span class="inline-block max-w-full break-words rounded border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 font-medium text-zinc-800 dark:text-zinc-200" title="${this._esc(d.rights)}">Rights: ${this._esc(d.rightsLabel || d.rights)}</span>
           <div class="flex items-center gap-1.5">
             <button type="button" data-iiif-copy data-uri="${this._esc(d.uri)}" class="${c.btn}">Copy URI</button>
-            <button type="button" data-iiif-select class="${c.btn}">Inspect</button>
+            <button type="button" data-iiif-select class="${c.btn}"${this.hasAttribute('hide-inspect') ? ' hidden style="display: none"' : ''}>Inspect</button>
           </div>
         </div>
       </div>
