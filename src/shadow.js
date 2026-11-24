@@ -8,7 +8,7 @@ let globalTemplate = null;
 
 export class IiifManifestSummary extends HTMLElement {
   static get observedAttributes() {
-    return ['manifest', 'listen'];
+    return ['manifest', 'listen', 'hide-inspect'];
   }
 
   static setTemplate(fn) {
@@ -44,6 +44,12 @@ export class IiifManifestSummary extends HTMLElement {
     if (oldVal === newVal || !this.isConnected) return;
     if (name === 'manifest' && newVal) {
       this.load(newVal);
+    } else if (name === 'hide-inspect' && typeof (this.template || globalTemplate) !== 'function') {
+      const button = this.shadowRoot.querySelector('.select-btn');
+      if (button) {
+        button.hidden = newVal !== null;
+        button.style.display = button.hidden ? 'none' : '';
+      }
     }
   }
 
@@ -183,7 +189,7 @@ export class IiifManifestSummary extends HTMLElement {
           <span part="rights" class="rights" title="${this._esc(d.rights)}">Rights: ${this._esc(d.rightsLabel || d.rights)}</span>
           <div class="btns">
             <button type="button" class="copy-uri" data-uri="${this._esc(d.uri)}">Copy URI</button>
-            <button type="button" class="select-btn">Inspect</button>
+            <button type="button" class="select-btn"${this.hasAttribute('hide-inspect') ? ' hidden style="display: none"' : ''}>Inspect</button>
           </div>
         </div>
       </div>

@@ -84,6 +84,7 @@ It is registered globally under `iiif-manifest-summary` when it is not already d
 | `manifest` | Yes | Manifest URL | URI to fetch and summarize. Initial load and subsequent changes are supported. |
 | `listen` | No | Custom event name | Listens for the named window event and uses `event.detail.manifest` to change manifests. |
 | `theme` | No | `light`, `dark`, or omitted | Controls the built-in theme. `light` forces the light colors; `dark` forces dark colors; omitted follows `prefers-color-scheme: dark`. |
+| `hide-inspect` | No | Boolean attribute | Hides the Inspect button in the built-in template; omitted by default. |
 
 #### CSS custom properties
 
@@ -190,6 +191,22 @@ It is registered globally under `iiif-manifest-summary-tw` when it is not alread
 | `manifest` | Yes | Manifest URL | Initial URI to fetch and summarize. |
 | `listen` | No | Custom event name | Listens for the named window event and uses `event.detail.manifest` to change manifests. |
 | `card-class` | No | Tailwind/CSS classes | Extra classes appended to the built-in card classes. |
+| `hide-inspect` | No | Boolean attribute | Hides the Inspect button; omitted by default. |
+
+For either component, add `hide-inspect` to hide the Inspect button:
+
+```html
+<iiif-manifest-summary manifest="https://example.org/iiif/manifest.json" hide-inspect></iiif-manifest-summary>
+```
+
+As with HTML boolean attributes, any value (including `"false"`) means hidden.
+Remove the attribute to show the button again, including after the card renders:
+
+```js
+element.removeAttribute('hide-inspect');
+```
+
+This affects only the built-in templates, not custom shadow-DOM templates.
 
 The component's `dark:` utilities follow the host application's Tailwind dark-mode
 configuration. With Tailwind's default media-based strategy, they automatically

@@ -43,6 +43,10 @@ test('fetch errors expose the complete error summary', async () => {
 class MockRoot {
   constructor() {
     this.summary = { textContent: '' };
+    this.inspect = {
+      style: {},
+      addEventListener(type, listener) { this.listener = listener; },
+    };
     this.toggle = {
       attributes: { 'aria-expanded': 'false' },
       getAttribute(name) { return this.attributes[name]; },
@@ -54,6 +58,7 @@ class MockRoot {
 
   querySelector(selector) {
     if (selector === '.summary') return this.summary;
+    if (selector === '.select-btn' || selector === '[data-iiif-select]') return this.inspect;
     if (selector === '.summary-toggle' || selector === '[data-iiif-summary-toggle]') {
       return this.innerHTML.includes('aria-expanded="false"') ? this.toggle : null;
     }
@@ -64,6 +69,7 @@ class MockRoot {
 globalThis.HTMLElement = class extends MockRoot {
   attachShadow() { this.shadowRoot = new MockRoot(); }
   getAttribute() { return null; }
+  hasAttribute() { return false; }
 };
 globalThis.customElements = { get() {}, define() {} };
 const { IiifManifestSummary } = await import('../src/shadow.js');
@@ -109,5 +115,28 @@ for (const Component of [IiifManifestSummary, IiifManifestSummaryTailwind]) {
     } else {
       assert.match(root.innerHTML, /<span class="inline-block max-w-full break-words rounded border /);
     }
+  });
+
+  test(`${Component.name} supports hiding and restoring Inspect without rerendering`, () => {
+    const component = new Component();
+    const root = component.shadowRoot || component;
+    component._data = summarizeManifest({ label: 'Test' });
+    component._renderData();
+    assert.match(root.innerHTML, />Inspect<\/button>/);
+    assert.doesNotMatch(root.innerHTML, /hidden style="display: none"/);
+    assert.equal(typeof root.inspect.listener, 'function');
+
+    component.isConnected = true;
+    component.attributeChangedCallback('hide-inspect', null, '');
+    assert.equal(root.inspect.hidden, true);
+    assert.equal(root.inspect.style.display, 'none');
+    component.attributeChangedCallback('hide-inspect', '', null);
+    assert.equal(root.inspect.hidden, false);
+    assert.equal(root.inspect.style.display, '');
+    assert.equal(typeof root.inspect.listener, 'function');
+
+    component.hasAttribute = (name) => name === 'hide-inspect';
+    component._renderData();
+    assert.match(root.innerHTML, /hidden style="display: none">Inspect<\/button>/);
   });
 }
