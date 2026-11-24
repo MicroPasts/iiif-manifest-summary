@@ -1,4 +1,4 @@
-# IIIF Manifest Summary
+# IIIF Manifest Summary Card
 
 Zero-dependency JavaScript web components for displaying compact summaries of IIIF Presentation API v2 and v3 manifests. The components show the manifest title, summary, rights/license, thumbnail, canvas count, and up to four metadata fields without loading a heavy IIIF viewer.
 
