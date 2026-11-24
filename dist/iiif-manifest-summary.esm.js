@@ -71,7 +71,7 @@ export function formatRightsLabel(rights) {
   if (ccZero) return `CC0 ${ccZero[1]}`;
   if (/creativecommons\.org\/publicdomain\/zero/i.test(value)) return 'CC0';
 
-  const ccLicense = value.match(/creativecommons\.org\/licenses\/(by(?:-nc|-nd|-sa|-nc-sa|-nc-nd)?|zero)\/([0-9.]+)/i);
+  const ccLicense = value.match(/creativecommons\.org\/licenses\/(?:cc-)?(by(?:-nc|-nd|-sa|-nc-sa|-nc-nd)?|zero)\/([0-9.]+)/i);
   if (ccLicense) {
     const code = ccLicense[1].toUpperCase();
     const version = ccLicense[2];
@@ -168,9 +168,12 @@ export function summarizeManifest(manifest, manifestUri = '') {
     pickLangValue(manifest?.description) ||
     '';
   const plainSummary = stripHtml(summary);
+  const summaryCharacters = Array.from(plainSummary);
+  const summaryStart = summaryCharacters.slice(0, 219).join('');
+  const lastWordBoundary = summaryStart.search(/\s+\S*$/);
   const compactSummary =
-    plainSummary.length > 220
-      ? `${plainSummary.slice(0, 219).replace(/\s+$/, '')}…`
+    summaryCharacters.length > 220
+      ? `${(lastWordBoundary >= 110 ? summaryStart.slice(0, lastWordBoundary) : summaryStart).trimEnd()}…`
       : plainSummary;
 
   const rights =
@@ -187,6 +190,7 @@ export function summarizeManifest(manifest, manifestUri = '') {
     version,
     label,
     summary: compactSummary,
+    fullSummary: plainSummary,
     rights,
     rightsLabel: formatRightsLabel(rights),
     thumbnail,
@@ -226,6 +230,7 @@ export async function fetchManifestSummary(uri) {
         version: 'IIIF',
         label: uri,
         summary: `Unable to load manifest (${err?.message || 'CORS or network error'}).`,
+        fullSummary: `Unable to load manifest (${err?.message || 'CORS or network error'}).`,
         rights: 'Unavailable',
         rightsLabel: 'Unavailable',
         thumbnail: null,
@@ -425,6 +430,7 @@ export class IiifManifestSummary extends HTMLElement {
         .thumb { width: 64px; height: 64px; object-fit: cover; border-radius: 4px; flex-shrink: 0; border: 1px solid var(--iiif-border); }
         .title { font-weight: 700; font-size: 15px; line-height: 1.3; }
         .summary { margin: 8px 0; font-size: 12.5px; line-height: 1.45; color: var(--iiif-fg); }
+        .summary-toggle { margin-top: -4px; }
         .meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 6px; margin: 8px 0; padding: 8px; border-radius: 4px; background: var(--iiif-surface); font-size: 11px; }
         .meta span { display: block; color: var(--iiif-muted); }
         .footer { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; border-top: 1px solid var(--iiif-border); padding-top: 8px; margin-top: 8px; font-size: 11px; }
@@ -459,6 +465,7 @@ export class IiifManifestSummary extends HTMLElement {
           </div>
         </div>
         ${d.summary ? `<p part="summary" class="summary">${this._esc(d.summary)}</p>` : ''}
+        ${d.fullSummary && d.fullSummary !== d.summary ? '<button type="button" class="summary-toggle" aria-expanded="false">Read more</button>' : ''}
         ${
           d.metadata?.length
             ? `<div part="meta" class="meta">${d.metadata
@@ -479,6 +486,14 @@ export class IiifManifestSummary extends HTMLElement {
         <img class="lightbox-image" src="${this._esc(d.thumbnail)}" alt="${this._esc(d.label)}">
       </dialog>` : ''}
     `;
+
+    this.shadowRoot.querySelector('.summary-toggle')?.addEventListener('click', (event) => {
+      const button = event.currentTarget;
+      const expanded = button.getAttribute('aria-expanded') === 'true';
+      this.shadowRoot.querySelector('.summary').textContent = expanded ? d.summary : d.fullSummary;
+      button.setAttribute('aria-expanded', String(!expanded));
+      button.textContent = expanded ? 'Read more' : 'Read less';
+    });
 
     const lightbox = this.shadowRoot.querySelector('.lightbox');
     this.shadowRoot.querySelector('[data-open-lightbox]')?.addEventListener('click', () => {
@@ -597,6 +612,7 @@ export class IiifManifestSummaryTailwind extends HTMLElement {
         </div>
 
         ${d.summary ? `<p class="mt-2 text-xs leading-relaxed text-zinc-700 dark:text-zinc-300">${this._esc(d.summary)}</p>` : ''}
+        ${d.fullSummary && d.fullSummary !== d.summary ? `<button type="button" data-iiif-summary-toggle aria-expanded="false" class="${c.btn} mt-1">Read more</button>` : ''}
 
         ${
           d.metadata?.length
@@ -622,6 +638,14 @@ export class IiifManifestSummaryTailwind extends HTMLElement {
         <img src="${this._esc(d.thumbnail)}" alt="${this._esc(d.label)}" class="block h-auto max-h-[calc(90vh-52px)] w-full object-contain">
       </dialog>` : ''}
     `;
+
+    this.querySelector('[data-iiif-summary-toggle]')?.addEventListener('click', (event) => {
+      const button = event.currentTarget;
+      const expanded = button.getAttribute('aria-expanded') === 'true';
+      button.previousElementSibling.textContent = expanded ? d.summary : d.fullSummary;
+      button.setAttribute('aria-expanded', String(!expanded));
+      button.textContent = expanded ? 'Read more' : 'Read less';
+    });
 
     const lightbox = this.querySelector('[data-iiif-lightbox]');
     this.querySelector('[data-open-lightbox]')?.addEventListener('click', () => {

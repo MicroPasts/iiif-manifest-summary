@@ -12,6 +12,7 @@ Package: `@micropasts/iiif-manifest-summary`
 - Shared in-memory fetch and summary cache
 - Loading and fetch-error states
 - HTML-safe plain-text summaries and metadata
+- Long descriptions have a compact preview and an accessible read-more control
 - Creative Commons and RightsStatements-friendly license labels
 - Clickable thumbnails with a native modal/overlay
 - Copy-to-clipboard URI button
@@ -164,6 +165,10 @@ element.template = (summary, escapeHtml) => `
 
 The instance template takes precedence over the global template. The escape callback HTML-escapes `&`, `<`, `>`, `"`, and control text used in templates.
 
+Both built-in card templates show a preview of descriptions longer than 220
+characters and offer Read more / Read less controls. Custom shadow templates
+can use `summary.fullSummary` to display the complete description.
+
 ### `<iiif-manifest-summary-tw>` — Tailwind/light DOM
 
 This component renders directly into the host element, so its utility classes can be scanned and provided by Tailwind in the host application.
@@ -307,6 +312,7 @@ The returned shape is:
   version: 'IIIF v3',
   label: 'Manifest title',
   summary: 'Short description',
+  fullSummary: 'Short description',
   rights: 'http://creativecommons.org/licenses/by/4.0/',
   rightsLabel: 'CC BY 4.0',
   thumbnail: 'https://example.org/thumbnail.jpg',
@@ -323,6 +329,7 @@ The normalizer:
 
 - Detects v3 from a Presentation 3 context or a top-level `items` array
 - Prefers v3 `summary`, then v2 `description`
+- Returns the full plain-text description in `fullSummary` and a preview of at most 220 characters in `summary` (shortened at a word boundary when possible)
 - Uses v3 `rights`, or v2 `license`
 - Checks a v3 manifest thumbnail, v2 sequence thumbnail, or v3 first-canvas thumbnail
 - Counts `items` that are canvases or falls back to v2 sequence canvases
@@ -348,6 +355,7 @@ The request sends `Accept: application/json`. Concurrent requests for the same U
   version: 'IIIF',
   label: uri,
   summary: 'Unable to load manifest (HTTP 404).',
+  fullSummary: 'Unable to load manifest (HTTP 404).',
   rights: 'Unavailable',
   thumbnail: null,
   canvasCount: 0,
@@ -411,9 +419,15 @@ Converts common Creative Commons and RightsStatements URIs into readable labels.
 formatRightsLabel('http://creativecommons.org/licenses/by-sa/4.0/');
 // 'CC BY-SA 4.0'
 
+formatRightsLabel('http://creativecommons.org/licenses/cc-by/4.0/');
+// 'CC BY 4.0'
+
 formatRightsLabel('http://rightsstatements.org/vocab/InC-EDU/1.0/');
 // 'In Copyright - Educational Use'
 ```
+
+The `cc-by` form is recognized for display, but the canonical Creative Commons
+URL uses `by` rather than `cc-by`. The original URI is preserved.
 
 ## Demo
 

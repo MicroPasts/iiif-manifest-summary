@@ -83,6 +83,7 @@ export class IiifManifestSummaryTailwind extends HTMLElement {
         </div>
 
         ${d.summary ? `<p class="mt-2 text-xs leading-relaxed text-zinc-700 dark:text-zinc-300">${this._esc(d.summary)}</p>` : ''}
+        ${d.fullSummary && d.fullSummary !== d.summary ? `<button type="button" data-iiif-summary-toggle aria-expanded="false" class="${c.btn} mt-1">Read more</button>` : ''}
 
         ${
           d.metadata?.length
@@ -108,6 +109,14 @@ export class IiifManifestSummaryTailwind extends HTMLElement {
         <img src="${this._esc(d.thumbnail)}" alt="${this._esc(d.label)}" class="block h-auto max-h-[calc(90vh-52px)] w-full object-contain">
       </dialog>` : ''}
     `;
+
+    this.querySelector('[data-iiif-summary-toggle]')?.addEventListener('click', (event) => {
+      const button = event.currentTarget;
+      const expanded = button.getAttribute('aria-expanded') === 'true';
+      button.previousElementSibling.textContent = expanded ? d.summary : d.fullSummary;
+      button.setAttribute('aria-expanded', String(!expanded));
+      button.textContent = expanded ? 'Read more' : 'Read less';
+    });
 
     const lightbox = this.querySelector('[data-iiif-lightbox]');
     this.querySelector('[data-open-lightbox]')?.addEventListener('click', () => {

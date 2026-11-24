@@ -64,7 +64,7 @@ export function formatRightsLabel(rights) {
   if (ccZero) return `CC0 ${ccZero[1]}`;
   if (/creativecommons\.org\/publicdomain\/zero/i.test(value)) return 'CC0';
 
-  const ccLicense = value.match(/creativecommons\.org\/licenses\/(by(?:-nc|-nd|-sa|-nc-sa|-nc-nd)?|zero)\/([0-9.]+)/i);
+  const ccLicense = value.match(/creativecommons\.org\/licenses\/(?:cc-)?(by(?:-nc|-nd|-sa|-nc-sa|-nc-nd)?|zero)\/([0-9.]+)/i);
   if (ccLicense) {
     const code = ccLicense[1].toUpperCase();
     const version = ccLicense[2];
@@ -161,9 +161,12 @@ export function summarizeManifest(manifest, manifestUri = '') {
     pickLangValue(manifest?.description) ||
     '';
   const plainSummary = stripHtml(summary);
+  const summaryCharacters = Array.from(plainSummary);
+  const summaryStart = summaryCharacters.slice(0, 219).join('');
+  const lastWordBoundary = summaryStart.search(/\s+\S*$/);
   const compactSummary =
-    plainSummary.length > 220
-      ? `${plainSummary.slice(0, 219).replace(/\s+$/, '')}…`
+    summaryCharacters.length > 220
+      ? `${(lastWordBoundary >= 110 ? summaryStart.slice(0, lastWordBoundary) : summaryStart).trimEnd()}…`
       : plainSummary;
 
   const rights =
@@ -180,6 +183,7 @@ export function summarizeManifest(manifest, manifestUri = '') {
     version,
     label,
     summary: compactSummary,
+    fullSummary: plainSummary,
     rights,
     rightsLabel: formatRightsLabel(rights),
     thumbnail,
@@ -219,6 +223,7 @@ export async function fetchManifestSummary(uri) {
         version: 'IIIF',
         label: uri,
         summary: `Unable to load manifest (${err?.message || 'CORS or network error'}).`,
+        fullSummary: `Unable to load manifest (${err?.message || 'CORS or network error'}).`,
         rights: 'Unavailable',
         rightsLabel: 'Unavailable',
         thumbnail: null,

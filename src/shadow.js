@@ -136,6 +136,7 @@ export class IiifManifestSummary extends HTMLElement {
         .thumb { width: 64px; height: 64px; object-fit: cover; border-radius: 4px; flex-shrink: 0; border: 1px solid var(--iiif-border); }
         .title { font-weight: 700; font-size: 15px; line-height: 1.3; }
         .summary { margin: 8px 0; font-size: 12.5px; line-height: 1.45; color: var(--iiif-fg); }
+        .summary-toggle { margin-top: -4px; }
         .meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 6px; margin: 8px 0; padding: 8px; border-radius: 4px; background: var(--iiif-surface); font-size: 11px; }
         .meta span { display: block; color: var(--iiif-muted); }
         .footer { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; border-top: 1px solid var(--iiif-border); padding-top: 8px; margin-top: 8px; font-size: 11px; }
@@ -170,6 +171,7 @@ export class IiifManifestSummary extends HTMLElement {
           </div>
         </div>
         ${d.summary ? `<p part="summary" class="summary">${this._esc(d.summary)}</p>` : ''}
+        ${d.fullSummary && d.fullSummary !== d.summary ? '<button type="button" class="summary-toggle" aria-expanded="false">Read more</button>' : ''}
         ${
           d.metadata?.length
             ? `<div part="meta" class="meta">${d.metadata
@@ -190,6 +192,14 @@ export class IiifManifestSummary extends HTMLElement {
         <img class="lightbox-image" src="${this._esc(d.thumbnail)}" alt="${this._esc(d.label)}">
       </dialog>` : ''}
     `;
+
+    this.shadowRoot.querySelector('.summary-toggle')?.addEventListener('click', (event) => {
+      const button = event.currentTarget;
+      const expanded = button.getAttribute('aria-expanded') === 'true';
+      this.shadowRoot.querySelector('.summary').textContent = expanded ? d.summary : d.fullSummary;
+      button.setAttribute('aria-expanded', String(!expanded));
+      button.textContent = expanded ? 'Read more' : 'Read less';
+    });
 
     const lightbox = this.shadowRoot.querySelector('.lightbox');
     this.shadowRoot.querySelector('[data-open-lightbox]')?.addEventListener('click', () => {
