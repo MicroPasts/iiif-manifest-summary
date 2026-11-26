@@ -21,7 +21,8 @@ async function createViewer() {
   document.head.appendChild(stylesheet);
   try {
     const [{ IIIFViewer }] = await Promise.all([import(VIEWER_MODULE), stylesheetReady]);
-    return new IIIFViewer(document.getElementById('viewer'), { theme, height: '600px', showUrlInput: false, summaryCollapseLength: '300' });
+    return new IIIFViewer(document.getElementById('viewer'), { theme, height: '600px', showUrlInput: false, summaryCollapseLength: 300,   showUrlInput: false,
+ });
   } catch (error) {
     stylesheet.remove();
     throw error;
