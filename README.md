@@ -89,6 +89,7 @@ It is registered globally under `iiif-manifest-summary` when it is not already d
 | `listen` | No | Custom event name | Listens for the named window event and uses `event.detail.manifest` to change manifests. |
 | `theme` | No | `light`, `dark`, or omitted | Controls the built-in theme. `light` forces the light colors; `dark` forces dark colors; omitted follows `prefers-color-scheme: dark`. |
 | `hide-inspect` | No | Boolean attribute | Hides the Inspect button in the built-in template; omitted by default. |
+| `inspect-label` | No | Text | Label for the Inspect button; defaults to `Inspect`. |
 | `hide-copy` | No | Boolean attribute | Hides the Copy URI button in the built-in template; omitted by default. |
 | `fields` | No | Comma-separated field names | Card sections to display; omitted displays all sections. See [Display configuration](#display-configuration). |
 | `metadata-fields` | No | Comma-separated metadata labels | Metadata entries to display; omitted displays the first four manifest entries with values. See [Display configuration](#display-configuration). |
@@ -199,6 +200,7 @@ It is registered globally under `iiif-manifest-summary-tw` when it is not alread
 | `listen` | No | Custom event name | Listens for the named window event and uses `event.detail.manifest` to change manifests. |
 | `card-class` | No | Tailwind/CSS classes | Extra classes appended to the built-in card classes. |
 | `hide-inspect` | No | Boolean attribute | Hides the Inspect button; omitted by default. |
+| `inspect-label` | No | Text | Label for the Inspect button; defaults to `Inspect`. |
 | `hide-copy` | No | Boolean attribute | Hides the Copy URI button; omitted by default. |
 | `fields` | No | Comma-separated field names | Card sections to display; omitted displays all sections. |
 | `metadata-fields` | No | Comma-separated metadata labels | Metadata entries to display; omitted displays the first four manifest entries with values. |
@@ -229,6 +231,20 @@ Remove an attribute to show its button again:
 element.removeAttribute('hide-inspect');
 element.toggleAttribute('hide-copy', true);
 ```
+
+Use `inspect-label` to change the Inspect button text on either component:
+
+```html
+<iiif-manifest-summary
+  manifest="https://example.org/iiif/manifest.json"
+  inspect-label="Open viewer"
+></iiif-manifest-summary>
+```
+
+Changing the attribute updates the button immediately without reloading the
+manifest. Removing it or setting it to an empty or whitespace-only value restores
+`Inspect`. The label is plain text; the button still dispatches `heritage:select`.
+It has no effect on a custom shadow template or on `hide-inspect`.
 
 Use `fields` to select the card sections (case-insensitive, comma-separated):
 

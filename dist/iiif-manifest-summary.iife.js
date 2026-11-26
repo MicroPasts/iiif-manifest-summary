@@ -1,5 +1,5 @@
 /**
- * @micropasts/iiif-manifest-summary v0.1.6
+ * @micropasts/iiif-manifest-summary v0.1.8
  * Zero-dependency IIIF Presentation v2/v3 summary Web Components
  * License: MIT
  */
@@ -172,6 +172,10 @@ function updateActionVisibility(root, selector, hidden) {
   }
 }
 
+function getInspectLabel(value) {
+  return value?.trim() || 'Inspect';
+}
+
 /**
  * Normalize a raw IIIF v2 or v3 manifest JSON object into a compact summary.
  */
@@ -330,7 +334,7 @@ let globalTemplate = null;
 
 class IiifManifestSummary extends HTMLElement {
   static get observedAttributes() {
-    return ['manifest', 'listen', 'hide-inspect', 'hide-copy', 'fields', 'metadata-fields'];
+    return ['manifest', 'listen', 'hide-inspect', 'hide-copy', 'inspect-label', 'fields', 'metadata-fields'];
   }
 
   static setTemplate(fn) {
@@ -369,6 +373,9 @@ class IiifManifestSummary extends HTMLElement {
     } else if (typeof (this.template || globalTemplate) !== 'function') {
       if (name === 'hide-inspect' || name === 'hide-copy') {
         updateActionVisibility(this.shadowRoot, name === 'hide-inspect' ? '.select-btn' : '.copy-uri', newVal !== null);
+      } else if (name === 'inspect-label') {
+        const button = this.shadowRoot.querySelector('.select-btn');
+        if (button) button.textContent = getInspectLabel(newVal);
       } else if ((name === 'fields' || name === 'metadata-fields') && !this._loading) {
         this._renderData();
       }
@@ -515,7 +522,7 @@ class IiifManifestSummary extends HTMLElement {
           ${show('rights') ? `<span part="rights" class="rights" title="${this._esc(d.rights)}">Rights: ${this._esc(d.rightsLabel || d.rights)}</span>` : ''}
           <div class="btns">
             <button type="button" class="copy-uri" data-uri="${this._esc(d.uri)}"${this.hasAttribute('hide-copy') ? ' hidden style="display: none"' : ''}>Copy URI</button>
-            <button type="button" class="select-btn"${this.hasAttribute('hide-inspect') ? ' hidden style="display: none"' : ''}>Inspect</button>
+            <button type="button" class="select-btn"${this.hasAttribute('hide-inspect') ? ' hidden style="display: none"' : ''}>${this._esc(getInspectLabel(this.getAttribute('inspect-label')))}</button>
           </div>
         </div>
       </div>
@@ -572,7 +579,7 @@ if (!customElements.get('iiif-manifest-summary')) {
 
 class IiifManifestSummaryTailwind extends HTMLElement {
   static get observedAttributes() {
-    return ['hide-inspect', 'hide-copy', 'fields', 'metadata-fields'];
+    return ['hide-inspect', 'hide-copy', 'inspect-label', 'fields', 'metadata-fields'];
   }
 
   static classes = {
@@ -612,6 +619,9 @@ class IiifManifestSummaryTailwind extends HTMLElement {
     if (oldVal === newVal) return;
     if (name === 'hide-inspect' || name === 'hide-copy') {
       updateActionVisibility(this, name === 'hide-inspect' ? '[data-iiif-select]' : '[data-iiif-copy]', newVal !== null);
+    } else if (name === 'inspect-label') {
+      const button = this.querySelector('[data-iiif-select]');
+      if (button) button.textContent = getInspectLabel(newVal);
     } else if ((name === 'fields' || name === 'metadata-fields') && !this._loading) {
       this._renderData();
     }
@@ -683,7 +693,7 @@ class IiifManifestSummaryTailwind extends HTMLElement {
           ${show('rights') ? `<span class="inline-block max-w-full break-words rounded border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 font-medium text-zinc-800 dark:text-zinc-200" title="${this._esc(d.rights)}">Rights: ${this._esc(d.rightsLabel || d.rights)}</span>` : ''}
           <div class="flex items-center gap-1.5">
             <button type="button" data-iiif-copy data-uri="${this._esc(d.uri)}" class="${c.btn}"${this.hasAttribute('hide-copy') ? ' hidden style="display: none"' : ''}>Copy URI</button>
-            <button type="button" data-iiif-select class="${c.btn}"${this.hasAttribute('hide-inspect') ? ' hidden style="display: none"' : ''}>Inspect</button>
+            <button type="button" data-iiif-select class="${c.btn}"${this.hasAttribute('hide-inspect') ? ' hidden style="display: none"' : ''}>${this._esc(getInspectLabel(this.getAttribute('inspect-label')))}</button>
           </div>
         </div>
       </div>

@@ -165,6 +165,10 @@ export function updateActionVisibility(root, selector, hidden) {
   }
 }
 
+export function getInspectLabel(value) {
+  return value?.trim() || 'Inspect';
+}
+
 /**
  * Normalize a raw IIIF v2 or v3 manifest JSON object into a compact summary.
  */

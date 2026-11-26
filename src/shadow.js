@@ -4,13 +4,14 @@ import {
   copyTextToClipboard,
   getCardOptions,
   updateActionVisibility,
+  getInspectLabel,
 } from './core.js';
 
 let globalTemplate = null;
 
 export class IiifManifestSummary extends HTMLElement {
   static get observedAttributes() {
-    return ['manifest', 'listen', 'hide-inspect', 'hide-copy', 'fields', 'metadata-fields'];
+    return ['manifest', 'listen', 'hide-inspect', 'hide-copy', 'inspect-label', 'fields', 'metadata-fields'];
   }
 
   static setTemplate(fn) {
@@ -49,6 +50,9 @@ export class IiifManifestSummary extends HTMLElement {
     } else if (typeof (this.template || globalTemplate) !== 'function') {
       if (name === 'hide-inspect' || name === 'hide-copy') {
         updateActionVisibility(this.shadowRoot, name === 'hide-inspect' ? '.select-btn' : '.copy-uri', newVal !== null);
+      } else if (name === 'inspect-label') {
+        const button = this.shadowRoot.querySelector('.select-btn');
+        if (button) button.textContent = getInspectLabel(newVal);
       } else if ((name === 'fields' || name === 'metadata-fields') && !this._loading) {
         this._renderData();
       }
@@ -195,7 +199,7 @@ export class IiifManifestSummary extends HTMLElement {
           ${show('rights') ? `<span part="rights" class="rights" title="${this._esc(d.rights)}">Rights: ${this._esc(d.rightsLabel || d.rights)}</span>` : ''}
           <div class="btns">
             <button type="button" class="copy-uri" data-uri="${this._esc(d.uri)}"${this.hasAttribute('hide-copy') ? ' hidden style="display: none"' : ''}>Copy URI</button>
-            <button type="button" class="select-btn"${this.hasAttribute('hide-inspect') ? ' hidden style="display: none"' : ''}>Inspect</button>
+            <button type="button" class="select-btn"${this.hasAttribute('hide-inspect') ? ' hidden style="display: none"' : ''}>${this._esc(getInspectLabel(this.getAttribute('inspect-label')))}</button>
           </div>
         </div>
       </div>

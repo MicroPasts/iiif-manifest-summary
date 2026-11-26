@@ -163,6 +163,24 @@ for (const Component of [IiifManifestSummary, IiifManifestSummaryTailwind]) {
     assert.match(root.innerHTML, /hidden style="display: none">Copy URI<\/button>/);
   });
 
+  test(`${Component.name} renders and updates the Inspect label safely`, () => {
+    const component = new Component();
+    const root = component.shadowRoot || component;
+    component._data = summarizeManifest({ label: 'Test' });
+    component.getAttribute = (name) => name === 'inspect-label' ? '  Open <viewer> & more  ' : null;
+    component._renderData();
+    assert.match(root.innerHTML, />Open &lt;viewer&gt; &amp; more<\/button>/);
+    assert.equal(typeof root.inspect.listener, 'function');
+    component.isConnected = true;
+    component.attributeChangedCallback('inspect-label', 'Open', ' View <item> ');
+    assert.equal(root.inspect.textContent, 'View <item>');
+    assert.equal(typeof root.inspect.listener, 'function');
+    component.attributeChangedCallback('inspect-label', 'View', '  ');
+    assert.equal(root.inspect.textContent, 'Inspect');
+    component.attributeChangedCallback('inspect-label', 'View', null);
+    assert.equal(root.inspect.textContent, 'Inspect');
+  });
+
   test(`${Component.name} filters sections and metadata beyond the default four`, () => {
     const component = new Component();
     const root = component.shadowRoot || component;

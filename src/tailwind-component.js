@@ -4,11 +4,12 @@ import {
   copyTextToClipboard,
   getCardOptions,
   updateActionVisibility,
+  getInspectLabel,
 } from './core.js';
 
 export class IiifManifestSummaryTailwind extends HTMLElement {
   static get observedAttributes() {
-    return ['hide-inspect', 'hide-copy', 'fields', 'metadata-fields'];
+    return ['hide-inspect', 'hide-copy', 'inspect-label', 'fields', 'metadata-fields'];
   }
 
   static classes = {
@@ -48,6 +49,9 @@ export class IiifManifestSummaryTailwind extends HTMLElement {
     if (oldVal === newVal) return;
     if (name === 'hide-inspect' || name === 'hide-copy') {
       updateActionVisibility(this, name === 'hide-inspect' ? '[data-iiif-select]' : '[data-iiif-copy]', newVal !== null);
+    } else if (name === 'inspect-label') {
+      const button = this.querySelector('[data-iiif-select]');
+      if (button) button.textContent = getInspectLabel(newVal);
     } else if ((name === 'fields' || name === 'metadata-fields') && !this._loading) {
       this._renderData();
     }
@@ -119,7 +123,7 @@ export class IiifManifestSummaryTailwind extends HTMLElement {
           ${show('rights') ? `<span class="inline-block max-w-full break-words rounded border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 font-medium text-zinc-800 dark:text-zinc-200" title="${this._esc(d.rights)}">Rights: ${this._esc(d.rightsLabel || d.rights)}</span>` : ''}
           <div class="flex items-center gap-1.5">
             <button type="button" data-iiif-copy data-uri="${this._esc(d.uri)}" class="${c.btn}"${this.hasAttribute('hide-copy') ? ' hidden style="display: none"' : ''}>Copy URI</button>
-            <button type="button" data-iiif-select class="${c.btn}"${this.hasAttribute('hide-inspect') ? ' hidden style="display: none"' : ''}>Inspect</button>
+            <button type="button" data-iiif-select class="${c.btn}"${this.hasAttribute('hide-inspect') ? ' hidden style="display: none"' : ''}>${this._esc(getInspectLabel(this.getAttribute('inspect-label')))}</button>
           </div>
         </div>
       </div>
