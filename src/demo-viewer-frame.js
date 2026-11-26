@@ -1,5 +1,5 @@
-const VIEWER_MODULE = 'https://cdn.jsdelivr.net/npm/@micropasts/iiif-viewer@1.0.3/dist/iiif-viewer.js';
-const VIEWER_CSS = 'https://cdn.jsdelivr.net/npm/@micropasts/iiif-viewer@1.0.3/dist/iiif-viewer.css';
+const VIEWER_MODULE = 'https://cdn.jsdelivr.net/npm/@micropasts/iiif-viewer@1.0.4/dist/iiif-viewer.js';
+const VIEWER_CSS = 'https://cdn.jsdelivr.net/npm/@micropasts/iiif-viewer@1.0.4/dist/iiif-viewer.css';
 const origin = location.origin;
 let viewer;
 let theme = 'light';
