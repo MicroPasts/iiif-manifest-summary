@@ -26,7 +26,7 @@
     },
     "./core": "./src/core.js",
     "./shadow": "./src/shadow.js",
-    "./tailwind": "./src/tailwind.js"
+    "./tailwind": "./src/tailwind-component.js"
   },
   "files": [
     "dist",

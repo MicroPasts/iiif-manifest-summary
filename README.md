@@ -85,6 +85,9 @@ It is registered globally under `iiif-manifest-summary` when it is not already d
 | `listen` | No | Custom event name | Listens for the named window event and uses `event.detail.manifest` to change manifests. |
 | `theme` | No | `light`, `dark`, or omitted | Controls the built-in theme. `light` forces the light colors; `dark` forces dark colors; omitted follows `prefers-color-scheme: dark`. |
 | `hide-inspect` | No | Boolean attribute | Hides the Inspect button in the built-in template; omitted by default. |
+| `hide-copy` | No | Boolean attribute | Hides the Copy URI button in the built-in template; omitted by default. |
+| `fields` | No | Comma-separated field names | Card sections to display; omitted displays all sections. See [Display configuration](#display-configuration). |
+| `metadata-fields` | No | Comma-separated metadata labels | Metadata entries to display; omitted displays the first four manifest entries with values. See [Display configuration](#display-configuration). |
 
 #### CSS custom properties
 
@@ -192,21 +195,71 @@ It is registered globally under `iiif-manifest-summary-tw` when it is not alread
 | `listen` | No | Custom event name | Listens for the named window event and uses `event.detail.manifest` to change manifests. |
 | `card-class` | No | Tailwind/CSS classes | Extra classes appended to the built-in card classes. |
 | `hide-inspect` | No | Boolean attribute | Hides the Inspect button; omitted by default. |
+| `hide-copy` | No | Boolean attribute | Hides the Copy URI button; omitted by default. |
+| `fields` | No | Comma-separated field names | Card sections to display; omitted displays all sections. |
+| `metadata-fields` | No | Comma-separated metadata labels | Metadata entries to display; omitted displays the first four manifest entries with values. |
 
-For either component, add `hide-inspect` to hide the Inspect button:
+### Display configuration
+
+The following options work on both component variants. They control the built-in
+templates, not custom shadow-DOM templates. By default all card sections and both
+buttons are shown. Adding or removing these attributes after loading updates the
+display without fetching the manifest again. Changing `fields` or
+`metadata-fields` re-renders the card and resets any expanded description or
+open lightbox.
+
+Use `hide-inspect` and `hide-copy` independently, or together:
 
 ```html
-<iiif-manifest-summary manifest="https://example.org/iiif/manifest.json" hide-inspect></iiif-manifest-summary>
+<iiif-manifest-summary
+  manifest="https://example.org/iiif/manifest.json"
+  hide-inspect
+  hide-copy
+></iiif-manifest-summary>
 ```
 
 As with HTML boolean attributes, any value (including `"false"`) means hidden.
-Remove the attribute to show the button again, including after the card renders:
+Remove an attribute to show its button again:
 
 ```js
 element.removeAttribute('hide-inspect');
+element.toggleAttribute('hide-copy', true);
 ```
 
-This affects only the built-in templates, not custom shadow-DOM templates.
+Use `fields` to select the card sections (case-insensitive, comma-separated):
+
+| Field | Displays |
+| --- | --- |
+| `version` | IIIF version badge |
+| `canvas-count` | Number of canvases |
+| `thumbnail` | Thumbnail and its lightbox, when available |
+| `label` | Manifest title |
+| `summary` | Description and its Read more control, when available |
+| `metadata` | Metadata entries selected by `metadata-fields` |
+| `rights` | Rights or licence badge |
+
+Omitting `fields` displays every section; an empty `fields=""` displays none.
+Unknown field names are ignored and reported in the browser console. Fetch errors
+are always displayed even when `summary` is excluded. Button visibility is
+independent of `fields`; hiding a section does not alter the Inspect event data.
+
+Use `metadata-fields` to select manifest metadata by its displayed label:
+
+```html
+<iiif-manifest-summary-tw
+  manifest="https://example.org/iiif/manifest.json"
+  fields="label, thumbnail, summary, metadata, rights"
+  metadata-fields="Artist, Date, Shelfmark"
+  hide-copy
+></iiif-manifest-summary-tw>
+```
+
+Labels are matched case-insensitively after language selection and HTML removal.
+Selected entries keep manifest order; matching entries beyond the first four are
+included, and duplicate labels are all included. An empty `metadata-fields=""`
+shows no entries. Commas separate labels, so labels containing commas cannot be
+selected with this attribute. `metadata-fields` has no visible effect unless
+`metadata` is included in `fields`. Removing either attribute restores its default.
 
 The component's `dark:` utilities follow the host application's Tailwind dark-mode
 configuration. With Tailwind's default media-based strategy, they automatically
@@ -218,10 +271,17 @@ change the page's theme.
 Ensure Tailwind scans the component's source (including dependencies if installed
 from npm), or otherwise includes its utility classes in the generated CSS. For
 example, Tailwind v3 can include
-`./node_modules/@micropasts/iiif-manifest-summary/src/tailwind.js` in its
+`./node_modules/@micropasts/iiif-manifest-summary/src/tailwind-component.js` in its
 `content` configuration; Tailwind v4 can register the same file with `@source`.
+If upgrading from an earlier version, update any source-scanning path that
+references `src/tailwind.js`. The component is not a Tailwind configuration file:
+do not import or register it as one. Its package subpath remains
+`@micropasts/iiif-manifest-summary/tailwind`.
 The demo uses a class-based variant, follows system changes until its theme toggle
-is used, and then preserves the chosen theme in local storage.
+is used, and then preserves the chosen theme in local storage. It also sets the
+shadow component's `theme` attribute to match the selected demo theme. In other
+applications, set that attribute when using an explicit page theme; the shadow
+component does not automatically follow an ancestor's `dark` class.
 
 #### Static Tailwind classes
 
@@ -338,6 +398,9 @@ The returned shape is:
   metadata: [
     { label: 'Repository', value: 'Example Archive' },
   ],
+  allMetadata: [
+    { label: 'Repository', value: 'Example Archive' },
+  ],
   // present on fetch failure only:
   error: true,
 }
@@ -351,7 +414,8 @@ The normalizer:
 - Uses v3 `rights`, or v2 `license`
 - Checks a v3 manifest thumbnail, v2 sequence thumbnail, or v3 first-canvas thumbnail
 - Counts `items` that are canvases or falls back to v2 sequence canvases
-- Includes at most four metadata entries
+- `metadata` includes entries with values from the first four manifest metadata entries;
+  `allMetadata` includes all entries with values for explicit label selection
 
 Language-map values prefer the `en` language, then `none`, then the first available language. Arrays are joined with ` · `.
 
@@ -457,7 +521,7 @@ npm run dev
 
 This builds `dist/` and `docs/`, then serves the demo directory on a local development server.
 
-Open the demo to compare the Tailwind light-DOM component with the shadow-DOM component. The demo seeds both v2 and v3 sample manifests, so it can render without live manifest requests.
+Open the demo to compare the Tailwind light-DOM component with the shadow-DOM component. Select **Inspect** on either card to load its manifest in an embedded `@micropasts/iiif-viewer`. The viewer is loaded on demand from jsDelivr and follows the demo theme; it requires network access to the CDN, the selected manifest, and its image services. Manifest and image servers must allow browser access.
 
 ## Build
 
@@ -471,6 +535,7 @@ The build script creates:
 - `dist/iiif-manifest-summary.iife.js`
 - `docs/iiif-manifest-summary.esm.js`
 - `docs/index.html`
+- `docs/demo-viewer.js`, `docs/demo-viewer-frame.html`, and `docs/demo-viewer-frame.js`
 
 The IIFE build exposes the package API through `window.IiifManifestSummaryLib`.
 

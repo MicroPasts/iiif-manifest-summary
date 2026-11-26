@@ -47,6 +47,10 @@ class MockRoot {
       style: {},
       addEventListener(type, listener) { this.listener = listener; },
     };
+    this.copy = {
+      style: {},
+      addEventListener(type, listener) { this.listener = listener; },
+    };
     this.toggle = {
       attributes: { 'aria-expanded': 'false' },
       getAttribute(name) { return this.attributes[name]; },
@@ -59,6 +63,7 @@ class MockRoot {
   querySelector(selector) {
     if (selector === '.summary') return this.summary;
     if (selector === '.select-btn' || selector === '[data-iiif-select]') return this.inspect;
+    if (selector === '.copy-uri' || selector === '[data-iiif-copy]') return this.copy;
     if (selector === '.summary-toggle' || selector === '[data-iiif-summary-toggle]') {
       return this.innerHTML.includes('aria-expanded="false"') ? this.toggle : null;
     }
@@ -73,7 +78,7 @@ globalThis.HTMLElement = class extends MockRoot {
 };
 globalThis.customElements = { get() {}, define() {} };
 const { IiifManifestSummary } = await import('../src/shadow.js');
-const { IiifManifestSummaryTailwind } = await import('../src/tailwind.js');
+const { IiifManifestSummaryTailwind } = await import('../src/tailwind-component.js');
 
 for (const Component of [IiifManifestSummary, IiifManifestSummaryTailwind]) {
   test(`${Component.name} expands and collapses a long description`, () => {
@@ -138,5 +143,66 @@ for (const Component of [IiifManifestSummary, IiifManifestSummaryTailwind]) {
     component.hasAttribute = (name) => name === 'hide-inspect';
     component._renderData();
     assert.match(root.innerHTML, /hidden style="display: none">Inspect<\/button>/);
+  });
+
+  test(`${Component.name} supports separate Copy URI visibility`, () => {
+    const component = new Component();
+    const root = component.shadowRoot || component;
+    component._data = summarizeManifest({ label: 'Test' });
+    component._renderData();
+    component.isConnected = true;
+    component.attributeChangedCallback('hide-copy', null, '');
+    assert.equal(root.copy.hidden, true);
+    assert.equal(root.copy.style.display, 'none');
+    assert.notEqual(root.inspect.hidden, true);
+    component.attributeChangedCallback('hide-copy', '', null);
+    assert.equal(root.copy.hidden, false);
+    assert.equal(root.copy.style.display, '');
+    component.hasAttribute = (name) => name === 'hide-copy';
+    component._renderData();
+    assert.match(root.innerHTML, /hidden style="display: none">Copy URI<\/button>/);
+  });
+
+  test(`${Component.name} filters sections and metadata beyond the default four`, () => {
+    const component = new Component();
+    const root = component.shadowRoot || component;
+    const metadata = ['Artist', 'Date', 'Material', 'Location', 'Shelfmark'].map((label) => ({ label, value: `${label} value` }));
+    component._data = summarizeManifest({
+      label: 'Test title', summary: 'Test description', rights: 'Test rights',
+      thumbnail: { id: 'https://example.org/thumb.jpg' }, metadata,
+    });
+    assert.equal(component._data.metadata.length, 4);
+    const attributes = { fields: 'label, metadata', 'metadata-fields': 'shelfmark, ARTIST' };
+    component.getAttribute = (name) => attributes[name] ?? null;
+    component._renderData();
+    assert.match(root.innerHTML, /Test title/);
+    assert.match(root.innerHTML, /Artist value/);
+    assert.match(root.innerHTML, /Shelfmark value/);
+    assert.doesNotMatch(root.innerHTML, /Date value|Test description|Test rights|thumb\.jpg|canvas\(es\)/);
+    component.isConnected = true;
+    attributes.fields = 'summary';
+    component.attributeChangedCallback('fields', 'label, metadata', 'summary');
+    assert.match(root.innerHTML, /Test description/);
+    assert.doesNotMatch(root.innerHTML, /Test title|Shelfmark value/);
+    delete attributes.fields;
+    delete attributes['metadata-fields'];
+    component.attributeChangedCallback('fields', 'summary', null);
+    assert.match(root.innerHTML, /Test title/);
+    assert.match(root.innerHTML, /Artist value/);
+    assert.doesNotMatch(root.innerHTML, /Shelfmark value/);
+  });
+
+  test(`${Component.name} keeps fetch errors visible when summary is excluded`, () => {
+    const component = new Component();
+    const root = component.shadowRoot || component;
+    component.getAttribute = (name) => name === 'fields' ? '' : null;
+    component._data = {
+      label: 'Error', version: 'IIIF', rights: 'Unavailable',
+      summary: 'Unable to load manifest (HTTP 404).', fullSummary: 'Unable to load manifest (HTTP 404).',
+      metadata: [], error: true,
+    };
+    component._renderData();
+    assert.match(root.innerHTML, /Unable to load manifest \(HTTP 404\)/);
+    assert.doesNotMatch(root.innerHTML, />IIIF<\/span>|Rights: Unavailable/);
   });
 }

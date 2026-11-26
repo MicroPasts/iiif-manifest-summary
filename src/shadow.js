@@ -2,13 +2,15 @@ import {
   fetchManifestSummary,
   emitManifestSelect,
   copyTextToClipboard,
+  getCardOptions,
+  updateActionVisibility,
 } from './core.js';
 
 let globalTemplate = null;
 
 export class IiifManifestSummary extends HTMLElement {
   static get observedAttributes() {
-    return ['manifest', 'listen', 'hide-inspect'];
+    return ['manifest', 'listen', 'hide-inspect', 'hide-copy', 'fields', 'metadata-fields'];
   }
 
   static setTemplate(fn) {
@@ -44,11 +46,11 @@ export class IiifManifestSummary extends HTMLElement {
     if (oldVal === newVal || !this.isConnected) return;
     if (name === 'manifest' && newVal) {
       this.load(newVal);
-    } else if (name === 'hide-inspect' && typeof (this.template || globalTemplate) !== 'function') {
-      const button = this.shadowRoot.querySelector('.select-btn');
-      if (button) {
-        button.hidden = newVal !== null;
-        button.style.display = button.hidden ? 'none' : '';
+    } else if (typeof (this.template || globalTemplate) !== 'function') {
+      if (name === 'hide-inspect' || name === 'hide-copy') {
+        updateActionVisibility(this.shadowRoot, name === 'hide-inspect' ? '.select-btn' : '.copy-uri', newVal !== null);
+      } else if ((name === 'fields' || name === 'metadata-fields') && !this._loading) {
+        this._renderData();
       }
     }
   }
@@ -61,8 +63,10 @@ export class IiifManifestSummary extends HTMLElement {
   }
 
   async load(url) {
+    this._loading = true;
     this._renderLoading();
     this._data = await fetchManifestSummary(url);
+    this._loading = false;
     this._renderData();
   }
 
@@ -94,6 +98,8 @@ export class IiifManifestSummary extends HTMLElement {
       return;
     }
 
+    const { fields, metadata } = getCardOptions(this, d);
+    const show = (field) => fields.has(field);
     this.shadowRoot.innerHTML = `
       <style>
         :host {
@@ -166,34 +172,34 @@ export class IiifManifestSummary extends HTMLElement {
         .lightbox-image { display: block; width: 100%; max-height: calc(90vh - 52px); object-fit: contain; }
       </style>
       <div part="card" class="card">
-        <div part="header" class="top">
-          <span part="badge" class="badge">${this._esc(d.version)}</span>
-          <span part="canvases" class="canvases">${d.canvasCount} canvas(es)</span>
-        </div>
-        <div class="body">
-          ${d.thumbnail ? `<button type="button" class="thumb-button" data-open-lightbox aria-label="View larger thumbnail"><img part="thumb" class="thumb" src="${this._esc(d.thumbnail)}" alt=""></button>` : ''}
-          <div>
+        ${show('version') || show('canvas-count') ? `<div part="header" class="top">
+          ${show('version') ? `<span part="badge" class="badge">${this._esc(d.version)}</span>` : ''}
+          ${show('canvas-count') ? `<span part="canvases" class="canvases">${d.canvasCount} canvas(es)</span>` : ''}
+        </div>` : ''}
+        ${show('label') || (show('thumbnail') && d.thumbnail) ? `<div class="body">
+          ${show('thumbnail') && d.thumbnail ? `<button type="button" class="thumb-button" data-open-lightbox aria-label="View larger thumbnail"><img part="thumb" class="thumb" src="${this._esc(d.thumbnail)}" alt=""></button>` : ''}
+          ${show('label') ? `<div>
             <div part="title" class="title">${this._esc(d.label)}</div>
-          </div>
-        </div>
-        ${d.summary ? `<p part="summary" class="summary">${this._esc(d.summary)}</p>` : ''}
-        ${d.fullSummary && d.fullSummary !== d.summary ? '<button type="button" class="summary-toggle" aria-expanded="false">Read more</button>' : ''}
+          </div>` : ''}
+        </div>` : ''}
+        ${(show('summary') || d.error) && d.summary ? `<p part="summary" class="summary">${this._esc(d.summary)}</p>` : ''}
+        ${(show('summary') || d.error) && d.fullSummary && d.fullSummary !== d.summary ? '<button type="button" class="summary-toggle" aria-expanded="false">Read more</button>' : ''}
         ${
-          d.metadata?.length
-            ? `<div part="meta" class="meta">${d.metadata
+          show('metadata') && metadata?.length
+            ? `<div part="meta" class="meta">${metadata
                 .map((m) => `<div><span>${this._esc(m.label)}</span><strong>${this._esc(m.value)}</strong></div>`)
                 .join('')}</div>`
             : ''
         }
         <div class="footer">
-          <span part="rights" class="rights" title="${this._esc(d.rights)}">Rights: ${this._esc(d.rightsLabel || d.rights)}</span>
+          ${show('rights') ? `<span part="rights" class="rights" title="${this._esc(d.rights)}">Rights: ${this._esc(d.rightsLabel || d.rights)}</span>` : ''}
           <div class="btns">
-            <button type="button" class="copy-uri" data-uri="${this._esc(d.uri)}">Copy URI</button>
+            <button type="button" class="copy-uri" data-uri="${this._esc(d.uri)}"${this.hasAttribute('hide-copy') ? ' hidden style="display: none"' : ''}>Copy URI</button>
             <button type="button" class="select-btn"${this.hasAttribute('hide-inspect') ? ' hidden style="display: none"' : ''}>Inspect</button>
           </div>
         </div>
       </div>
-      ${d.thumbnail ? `<dialog class="lightbox" aria-label="Larger manifest thumbnail">
+      ${show('thumbnail') && d.thumbnail ? `<dialog class="lightbox" aria-label="Larger manifest thumbnail">
         <button type="button" class="lightbox-close" data-close-lightbox aria-label="Close">Close</button>
         <img class="lightbox-image" src="${this._esc(d.thumbnail)}" alt="${this._esc(d.label)}">
       </dialog>` : ''}

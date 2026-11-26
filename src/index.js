@@ -9,4 +9,4 @@ export {
   formatRightsLabel,
 } from './core.js';
 export { IiifManifestSummary } from './shadow.js';
-export { IiifManifestSummaryTailwind } from './tailwind.js';
+export { IiifManifestSummaryTailwind } from './tailwind-component.js';

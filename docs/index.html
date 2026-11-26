@@ -9,12 +9,24 @@
       const systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
       const applyTheme = () => {
         const saved = localStorage.getItem('iiif-demo-theme');
+        const isDark = saved === 'dark' || (saved !== 'light' && systemTheme.matches);
         document.documentElement.classList.toggle(
-          'dark', saved === 'dark' || (saved !== 'light' && systemTheme.matches)
+          'dark', isDark
         );
+        document.querySelectorAll('iiif-manifest-summary').forEach((element) => {
+          element.setAttribute('theme', isDark ? 'dark' : 'light');
+        });
       };
       applyTheme();
       systemTheme.addEventListener('change', applyTheme);
+      document.addEventListener('DOMContentLoaded', () => {
+        applyTheme();
+        document.getElementById('theme-toggle').addEventListener('click', () => {
+          const isDark = !document.documentElement.classList.contains('dark');
+          localStorage.setItem('iiif-demo-theme', isDark ? 'dark' : 'light');
+          applyTheme();
+        });
+      });
     })();
   </script>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -90,10 +102,19 @@
       </dl>
     </section>
 
+    <section class="rounded-xl border border-stone-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5" aria-labelledby="viewer-title">
+      <h2 id="viewer-title" class="text-sm font-semibold">IIIF viewer</h2>
+      <p id="viewer-status" role="status" class="mt-1 mb-3 text-xs text-stone-600 dark:text-zinc-400">Select Inspect on either card to open its manifest in the viewer.</p>
+      <div id="viewer-host"></div>
+    </section>
+
   </div>
 
   <script type="module">
     import { seedManifest } from './iiif-manifest-summary.esm.js';
+    import { setupDemoViewer } from './demo-viewer.js';
+
+    setupDemoViewer(document);
 
     // Seed sample IIIF v3 and v2 manifests so the demo renders reliably even offline/in sandboxes
     seedManifest('https://example.org/iiif/book-1/manifest.json', {
@@ -145,10 +166,6 @@
         `Received ${new Date().toLocaleTimeString()}`;
     });
 
-    document.getElementById('theme-toggle').addEventListener('click', () => {
-      const isDark = document.documentElement.classList.toggle('dark');
-      localStorage.setItem('iiif-demo-theme', isDark ? 'dark' : 'light');
-    });
   </script>
 </body>
 </html>

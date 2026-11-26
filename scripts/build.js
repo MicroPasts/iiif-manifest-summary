@@ -23,7 +23,7 @@ const stripExports = (code) =>
 
 const coreCode = readSrc('core.js');
 const shadowCode = readSrc('shadow.js');
-const tailwindCode = readSrc('tailwind.js');
+const tailwindCode = readSrc('tailwind-component.js');
 const demoHtml = readSrc('demo.html');
 const { name, version } = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
 
@@ -39,7 +39,7 @@ const esmBundle = [
   coreCode.trim(),
   '\n// --- shadow.js ---',
   stripImports(shadowCode).trim(),
-  '\n// --- tailwind.js ---',
+  '\n// --- tailwind-component.js ---',
   stripImports(tailwindCode).trim(),
   '',
 ].join('\n');
@@ -66,5 +66,8 @@ fs.writeFileSync(path.join(distDir, 'iiif-manifest-summary.esm.js'), esmBundle, 
 fs.writeFileSync(path.join(distDir, 'iiif-manifest-summary.iife.js'), iifeBundle, 'utf8');
 fs.writeFileSync(path.join(docsDir, 'iiif-manifest-summary.esm.js'), esmBundle, 'utf8');
 fs.writeFileSync(path.join(docsDir, 'index.html'), demoHtml, 'utf8');
+fs.writeFileSync(path.join(docsDir, 'demo-viewer.js'), readSrc('demo-viewer.js'), 'utf8');
+fs.writeFileSync(path.join(docsDir, 'demo-viewer-frame.html'), readSrc('demo-viewer-frame.html'), 'utf8');
+fs.writeFileSync(path.join(docsDir, 'demo-viewer-frame.js'), readSrc('demo-viewer-frame.js'), 'utf8');
 
 console.log('Built dist/ and docs/ for @micropasts/iiif-manifest-summary.');

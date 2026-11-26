@@ -1,5 +1,5 @@
 /**
- * @micropasts/iiif-manifest-summary v0.1.5
+ * @micropasts/iiif-manifest-summary v0.1.6
  * Zero-dependency IIIF Presentation v2/v3 summary Web Components
  * License: MIT
  */
@@ -138,12 +138,38 @@ function extractCanvasCount(manifest) {
 function extractMetadata(manifest) {
   if (!Array.isArray(manifest.metadata)) return [];
   return manifest.metadata
-    .slice(0, 4)
     .map((entry) => ({
-      label: stripHtml(pickLangValue(entry.label)) || 'Field',
-      value: stripHtml(pickLangValue(entry.value)) || '',
-    }))
-    .filter((m) => m.value);
+      label: stripHtml(pickLangValue(entry?.label)) || 'Field',
+      value: stripHtml(pickLangValue(entry?.value)) || '',
+    }));
+}
+
+const CARD_FIELDS = ['version', 'canvas-count', 'thumbnail', 'label', 'summary', 'metadata', 'rights'];
+
+export function getCardOptions(element, data) {
+  const fieldsAttribute = element.getAttribute('fields');
+  const requested = fieldsAttribute === null
+    ? CARD_FIELDS
+    : fieldsAttribute.split(',').map((field) => field.trim().toLowerCase()).filter(Boolean);
+  const invalid = requested.filter((field) => !CARD_FIELDS.includes(field));
+  if (invalid.length) console.warn(`Unknown summary fields: ${invalid.join(', ')}`);
+  const fields = new Set(requested);
+  const metadataAttribute = element.getAttribute('metadata-fields');
+  const labels = metadataAttribute === null ? null : new Set(
+    metadataAttribute.split(',').map((label) => label.trim().toLowerCase()).filter(Boolean)
+  );
+  const metadata = labels === null
+    ? data.metadata
+    : (data.allMetadata || data.metadata).filter((entry) => labels.has(entry.label.trim().toLowerCase()));
+  return { fields, metadata };
+}
+
+export function updateActionVisibility(root, selector, hidden) {
+  const button = root.querySelector(selector);
+  if (button) {
+    button.hidden = hidden;
+    button.style.display = hidden ? 'none' : '';
+  }
 }
 
 /**
@@ -183,7 +209,8 @@ export function summarizeManifest(manifest, manifestUri = '') {
 
   const thumbnail = extractThumbnail(manifest || {});
   const canvasCount = extractCanvasCount(manifest || {});
-  const metadata = extractMetadata(manifest || {});
+  const allMetadata = extractMetadata(manifest || {});
+  const metadata = allMetadata.slice(0, 4).filter((entry) => entry.value);
 
   return {
     uri: manifest?.id || manifest?.['@id'] || manifestUri,
@@ -196,6 +223,7 @@ export function summarizeManifest(manifest, manifestUri = '') {
     thumbnail,
     canvasCount,
     metadata,
+    allMetadata: allMetadata.filter((entry) => entry.value),
   };
 }
 
@@ -236,6 +264,7 @@ export async function fetchManifestSummary(uri) {
         thumbnail: null,
         canvasCount: 0,
         metadata: [],
+        allMetadata: [],
         error: true,
       };
     });
@@ -302,7 +331,7 @@ let globalTemplate = null;
 
 export class IiifManifestSummary extends HTMLElement {
   static get observedAttributes() {
-    return ['manifest', 'listen', 'hide-inspect'];
+    return ['manifest', 'listen', 'hide-inspect', 'hide-copy', 'fields', 'metadata-fields'];
   }
 
   static setTemplate(fn) {
@@ -338,11 +367,11 @@ export class IiifManifestSummary extends HTMLElement {
     if (oldVal === newVal || !this.isConnected) return;
     if (name === 'manifest' && newVal) {
       this.load(newVal);
-    } else if (name === 'hide-inspect' && typeof (this.template || globalTemplate) !== 'function') {
-      const button = this.shadowRoot.querySelector('.select-btn');
-      if (button) {
-        button.hidden = newVal !== null;
-        button.style.display = button.hidden ? 'none' : '';
+    } else if (typeof (this.template || globalTemplate) !== 'function') {
+      if (name === 'hide-inspect' || name === 'hide-copy') {
+        updateActionVisibility(this.shadowRoot, name === 'hide-inspect' ? '.select-btn' : '.copy-uri', newVal !== null);
+      } else if ((name === 'fields' || name === 'metadata-fields') && !this._loading) {
+        this._renderData();
       }
     }
   }
@@ -355,8 +384,10 @@ export class IiifManifestSummary extends HTMLElement {
   }
 
   async load(url) {
+    this._loading = true;
     this._renderLoading();
     this._data = await fetchManifestSummary(url);
+    this._loading = false;
     this._renderData();
   }
 
@@ -388,6 +419,8 @@ export class IiifManifestSummary extends HTMLElement {
       return;
     }
 
+    const { fields, metadata } = getCardOptions(this, d);
+    const show = (field) => fields.has(field);
     this.shadowRoot.innerHTML = `
       <style>
         :host {
@@ -460,34 +493,34 @@ export class IiifManifestSummary extends HTMLElement {
         .lightbox-image { display: block; width: 100%; max-height: calc(90vh - 52px); object-fit: contain; }
       </style>
       <div part="card" class="card">
-        <div part="header" class="top">
-          <span part="badge" class="badge">${this._esc(d.version)}</span>
-          <span part="canvases" class="canvases">${d.canvasCount} canvas(es)</span>
-        </div>
-        <div class="body">
-          ${d.thumbnail ? `<button type="button" class="thumb-button" data-open-lightbox aria-label="View larger thumbnail"><img part="thumb" class="thumb" src="${this._esc(d.thumbnail)}" alt=""></button>` : ''}
-          <div>
+        ${show('version') || show('canvas-count') ? `<div part="header" class="top">
+          ${show('version') ? `<span part="badge" class="badge">${this._esc(d.version)}</span>` : ''}
+          ${show('canvas-count') ? `<span part="canvases" class="canvases">${d.canvasCount} canvas(es)</span>` : ''}
+        </div>` : ''}
+        ${show('label') || (show('thumbnail') && d.thumbnail) ? `<div class="body">
+          ${show('thumbnail') && d.thumbnail ? `<button type="button" class="thumb-button" data-open-lightbox aria-label="View larger thumbnail"><img part="thumb" class="thumb" src="${this._esc(d.thumbnail)}" alt=""></button>` : ''}
+          ${show('label') ? `<div>
             <div part="title" class="title">${this._esc(d.label)}</div>
-          </div>
-        </div>
-        ${d.summary ? `<p part="summary" class="summary">${this._esc(d.summary)}</p>` : ''}
-        ${d.fullSummary && d.fullSummary !== d.summary ? '<button type="button" class="summary-toggle" aria-expanded="false">Read more</button>' : ''}
+          </div>` : ''}
+        </div>` : ''}
+        ${(show('summary') || d.error) && d.summary ? `<p part="summary" class="summary">${this._esc(d.summary)}</p>` : ''}
+        ${(show('summary') || d.error) && d.fullSummary && d.fullSummary !== d.summary ? '<button type="button" class="summary-toggle" aria-expanded="false">Read more</button>' : ''}
         ${
-          d.metadata?.length
-            ? `<div part="meta" class="meta">${d.metadata
+          show('metadata') && metadata?.length
+            ? `<div part="meta" class="meta">${metadata
                 .map((m) => `<div><span>${this._esc(m.label)}</span><strong>${this._esc(m.value)}</strong></div>`)
                 .join('')}</div>`
             : ''
         }
         <div class="footer">
-          <span part="rights" class="rights" title="${this._esc(d.rights)}">Rights: ${this._esc(d.rightsLabel || d.rights)}</span>
+          ${show('rights') ? `<span part="rights" class="rights" title="${this._esc(d.rights)}">Rights: ${this._esc(d.rightsLabel || d.rights)}</span>` : ''}
           <div class="btns">
-            <button type="button" class="copy-uri" data-uri="${this._esc(d.uri)}">Copy URI</button>
+            <button type="button" class="copy-uri" data-uri="${this._esc(d.uri)}"${this.hasAttribute('hide-copy') ? ' hidden style="display: none"' : ''}>Copy URI</button>
             <button type="button" class="select-btn"${this.hasAttribute('hide-inspect') ? ' hidden style="display: none"' : ''}>Inspect</button>
           </div>
         </div>
       </div>
-      ${d.thumbnail ? `<dialog class="lightbox" aria-label="Larger manifest thumbnail">
+      ${show('thumbnail') && d.thumbnail ? `<dialog class="lightbox" aria-label="Larger manifest thumbnail">
         <button type="button" class="lightbox-close" data-close-lightbox aria-label="Close">Close</button>
         <img class="lightbox-image" src="${this._esc(d.thumbnail)}" alt="${this._esc(d.label)}">
       </dialog>` : ''}
@@ -538,10 +571,10 @@ if (!customElements.get('iiif-manifest-summary')) {
   customElements.define('iiif-manifest-summary', IiifManifestSummary);
 }
 
-// --- tailwind.js ---
+// --- tailwind-component.js ---
 export class IiifManifestSummaryTailwind extends HTMLElement {
   static get observedAttributes() {
-    return ['hide-inspect'];
+    return ['hide-inspect', 'hide-copy', 'fields', 'metadata-fields'];
   }
 
   static classes = {
@@ -578,11 +611,11 @@ export class IiifManifestSummaryTailwind extends HTMLElement {
   }
 
   attributeChangedCallback(name, oldVal, newVal) {
-    if (name !== 'hide-inspect' || oldVal === newVal) return;
-    const button = this.querySelector('[data-iiif-select]');
-    if (button) {
-      button.hidden = newVal !== null;
-      button.style.display = button.hidden ? 'none' : '';
+    if (oldVal === newVal) return;
+    if (name === 'hide-inspect' || name === 'hide-copy') {
+      updateActionVisibility(this, name === 'hide-inspect' ? '[data-iiif-select]' : '[data-iiif-copy]', newVal !== null);
+    } else if ((name === 'fields' || name === 'metadata-fields') && !this._loading) {
+      this._renderData();
     }
   }
 
@@ -594,9 +627,11 @@ export class IiifManifestSummaryTailwind extends HTMLElement {
   }
 
   async load(url) {
+    this._loading = true;
     const c = IiifManifestSummaryTailwind.classes;
     this.innerHTML = `<div class="${c.card} text-xs text-zinc-500 dark:text-zinc-400 animate-pulse">Loading IIIF manifest summary…</div>`;
     this._data = await fetchManifestSummary(url);
+    this._loading = false;
     this._renderData();
   }
 
@@ -612,30 +647,32 @@ export class IiifManifestSummaryTailwind extends HTMLElement {
     const d = this._data;
     if (!d) return;
     const c = IiifManifestSummaryTailwind.classes;
+    const { fields, metadata } = getCardOptions(this, d);
+    const show = (field) => fields.has(field);
     const cardClass = `${c.card} ${this.getAttribute('card-class') || ''}`.trim();
 
     this.innerHTML = `
       <div class="${cardClass}">
-        <div class="flex items-center justify-between gap-2 mb-2">
-          <span class="inline-flex items-center rounded bg-sky-700 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">${this._esc(d.version)}</span>
-          <span class="font-mono text-[11px] text-zinc-500 dark:text-zinc-400">${d.canvasCount} canvas(es)</span>
-        </div>
+        ${show('version') || show('canvas-count') ? `<div class="flex items-center justify-between gap-2 mb-2">
+          ${show('version') ? `<span class="inline-flex items-center rounded bg-sky-700 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">${this._esc(d.version)}</span>` : ''}
+          ${show('canvas-count') ? `<span class="font-mono text-[11px] text-zinc-500 dark:text-zinc-400">${d.canvasCount} canvas(es)</span>` : ''}
+        </div>` : ''}
 
-        <div class="flex items-start gap-3">
-          ${d.thumbnail ? `<button type="button" data-open-lightbox aria-label="View larger thumbnail" class="shrink-0 rounded border-0 p-0">
+        ${show('label') || (show('thumbnail') && d.thumbnail) ? `<div class="flex items-start gap-3">
+          ${show('thumbnail') && d.thumbnail ? `<button type="button" data-open-lightbox aria-label="View larger thumbnail" class="shrink-0 rounded border-0 p-0">
             <img src="${this._esc(d.thumbnail)}" alt="" class="h-14 w-14 rounded object-cover border border-zinc-200 dark:border-zinc-700">
           </button>` : ''}
-          <div class="min-w-0">
+          ${show('label') ? `<div class="min-w-0">
             <h3 class="text-sm font-bold text-zinc-900 dark:text-zinc-100 leading-snug">${this._esc(d.label)}</h3>
-          </div>
-        </div>
+          </div>` : ''}
+        </div>` : ''}
 
-        ${d.summary ? `<p class="mt-2 text-xs leading-relaxed text-zinc-700 dark:text-zinc-300">${this._esc(d.summary)}</p>` : ''}
-        ${d.fullSummary && d.fullSummary !== d.summary ? `<button type="button" data-iiif-summary-toggle aria-expanded="false" class="${c.btn} mt-1">Read more</button>` : ''}
+        ${(show('summary') || d.error) && d.summary ? `<p class="mt-2 text-xs leading-relaxed text-zinc-700 dark:text-zinc-300">${this._esc(d.summary)}</p>` : ''}
+        ${(show('summary') || d.error) && d.fullSummary && d.fullSummary !== d.summary ? `<button type="button" data-iiif-summary-toggle aria-expanded="false" class="${c.btn} mt-1">Read more</button>` : ''}
 
         ${
-          d.metadata?.length
-            ? `<div class="mt-2.5 grid grid-cols-2 gap-2 rounded-md bg-zinc-50 dark:bg-zinc-950/70 p-2 text-xs border border-zinc-200/70 dark:border-zinc-800">${d.metadata
+          show('metadata') && metadata?.length
+            ? `<div class="mt-2.5 grid grid-cols-2 gap-2 rounded-md bg-zinc-50 dark:bg-zinc-950/70 p-2 text-xs border border-zinc-200/70 dark:border-zinc-800">${metadata
                 .map(
                   (m) =>
                     `<div><span class="block text-[10px] uppercase tracking-wide text-zinc-500 dark:text-zinc-400">${this._esc(m.label)}</span><strong class="font-medium text-zinc-900 dark:text-zinc-100">${this._esc(m.value)}</strong></div>`
@@ -645,14 +682,14 @@ export class IiifManifestSummaryTailwind extends HTMLElement {
         }
 
         <div class="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-zinc-200 dark:border-zinc-800 pt-2 text-[11px]">
-          <span class="inline-block max-w-full break-words rounded border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 font-medium text-zinc-800 dark:text-zinc-200" title="${this._esc(d.rights)}">Rights: ${this._esc(d.rightsLabel || d.rights)}</span>
+          ${show('rights') ? `<span class="inline-block max-w-full break-words rounded border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 font-medium text-zinc-800 dark:text-zinc-200" title="${this._esc(d.rights)}">Rights: ${this._esc(d.rightsLabel || d.rights)}</span>` : ''}
           <div class="flex items-center gap-1.5">
-            <button type="button" data-iiif-copy data-uri="${this._esc(d.uri)}" class="${c.btn}">Copy URI</button>
+            <button type="button" data-iiif-copy data-uri="${this._esc(d.uri)}" class="${c.btn}"${this.hasAttribute('hide-copy') ? ' hidden style="display: none"' : ''}>Copy URI</button>
             <button type="button" data-iiif-select class="${c.btn}"${this.hasAttribute('hide-inspect') ? ' hidden style="display: none"' : ''}>Inspect</button>
           </div>
         </div>
       </div>
-      ${d.thumbnail ? `<dialog data-iiif-lightbox aria-label="Larger manifest thumbnail" class="w-[min(90vw,900px)] max-h-[90vh] rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-3 text-zinc-900 dark:text-zinc-100 backdrop:bg-black/75">
+      ${show('thumbnail') && d.thumbnail ? `<dialog data-iiif-lightbox aria-label="Larger manifest thumbnail" class="w-[min(90vw,900px)] max-h-[90vh] rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-3 text-zinc-900 dark:text-zinc-100 backdrop:bg-black/75">
         <button type="button" data-close-lightbox aria-label="Close" class="${c.btn} float-right mb-2">Close</button>
         <img src="${this._esc(d.thumbnail)}" alt="${this._esc(d.label)}" class="block h-auto max-h-[calc(90vh-52px)] w-full object-contain">
       </dialog>` : ''}

@@ -131,12 +131,38 @@ function extractCanvasCount(manifest) {
 function extractMetadata(manifest) {
   if (!Array.isArray(manifest.metadata)) return [];
   return manifest.metadata
-    .slice(0, 4)
     .map((entry) => ({
-      label: stripHtml(pickLangValue(entry.label)) || 'Field',
-      value: stripHtml(pickLangValue(entry.value)) || '',
-    }))
-    .filter((m) => m.value);
+      label: stripHtml(pickLangValue(entry?.label)) || 'Field',
+      value: stripHtml(pickLangValue(entry?.value)) || '',
+    }));
+}
+
+const CARD_FIELDS = ['version', 'canvas-count', 'thumbnail', 'label', 'summary', 'metadata', 'rights'];
+
+export function getCardOptions(element, data) {
+  const fieldsAttribute = element.getAttribute('fields');
+  const requested = fieldsAttribute === null
+    ? CARD_FIELDS
+    : fieldsAttribute.split(',').map((field) => field.trim().toLowerCase()).filter(Boolean);
+  const invalid = requested.filter((field) => !CARD_FIELDS.includes(field));
+  if (invalid.length) console.warn(`Unknown summary fields: ${invalid.join(', ')}`);
+  const fields = new Set(requested);
+  const metadataAttribute = element.getAttribute('metadata-fields');
+  const labels = metadataAttribute === null ? null : new Set(
+    metadataAttribute.split(',').map((label) => label.trim().toLowerCase()).filter(Boolean)
+  );
+  const metadata = labels === null
+    ? data.metadata
+    : (data.allMetadata || data.metadata).filter((entry) => labels.has(entry.label.trim().toLowerCase()));
+  return { fields, metadata };
+}
+
+export function updateActionVisibility(root, selector, hidden) {
+  const button = root.querySelector(selector);
+  if (button) {
+    button.hidden = hidden;
+    button.style.display = hidden ? 'none' : '';
+  }
 }
 
 /**
@@ -176,7 +202,8 @@ export function summarizeManifest(manifest, manifestUri = '') {
 
   const thumbnail = extractThumbnail(manifest || {});
   const canvasCount = extractCanvasCount(manifest || {});
-  const metadata = extractMetadata(manifest || {});
+  const allMetadata = extractMetadata(manifest || {});
+  const metadata = allMetadata.slice(0, 4).filter((entry) => entry.value);
 
   return {
     uri: manifest?.id || manifest?.['@id'] || manifestUri,
@@ -189,6 +216,7 @@ export function summarizeManifest(manifest, manifestUri = '') {
     thumbnail,
     canvasCount,
     metadata,
+    allMetadata: allMetadata.filter((entry) => entry.value),
   };
 }
 
@@ -229,6 +257,7 @@ export async function fetchManifestSummary(uri) {
         thumbnail: null,
         canvasCount: 0,
         metadata: [],
+        allMetadata: [],
         error: true,
       };
     });
