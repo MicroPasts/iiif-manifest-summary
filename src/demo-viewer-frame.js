@@ -1,5 +1,5 @@
-const VIEWER_MODULE = 'https://cdn.jsdelivr.net/npm/@micropasts/iiif-viewer@1.0.1/dist/iiif-viewer.js';
-const VIEWER_CSS = 'https://cdn.jsdelivr.net/npm/@micropasts/iiif-viewer@1.0.1/dist/iiif-viewer.css';
+const VIEWER_MODULE = 'https://cdn.jsdelivr.net/npm/@micropasts/iiif-viewer@1.0.3/dist/iiif-viewer.js';
+const VIEWER_CSS = 'https://cdn.jsdelivr.net/npm/@micropasts/iiif-viewer@1.0.3/dist/iiif-viewer.css';
 const origin = location.origin;
 let viewer;
 let theme = 'light';
@@ -21,7 +21,7 @@ async function createViewer() {
   document.head.appendChild(stylesheet);
   try {
     const [{ IIIFViewer }] = await Promise.all([import(VIEWER_MODULE), stylesheetReady]);
-    return new IIIFViewer(document.getElementById('viewer'), { theme, height: '600px', showUrlInput: false });
+    return new IIIFViewer(document.getElementById('viewer'), { theme, height: '600px', showUrlInput: false, summaryCollapseLength: '300' });
   } catch (error) {
     stylesheet.remove();
     throw error;

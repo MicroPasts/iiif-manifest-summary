@@ -1,5 +1,5 @@
 /**
- * @micropasts/iiif-manifest-summary v0.1.8
+ * @micropasts/iiif-manifest-summary v0.1.9
  * Zero-dependency IIIF Presentation v2/v3 summary Web Components
  * License: MIT
  */
