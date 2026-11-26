@@ -20,9 +20,11 @@ jobs:
       - name: Check release tag
         env:
           RELEASE_TAG: ${{ github.event.release.tag_name }}
-        run: node -e "const version = require('./package.json').version; if (process.env.RELEASE_TAG !== version && process.env.RELEASE_TAG !== 'v' + version) { console.error('Release tag must match package version ' + version); process.exit(1); }"
+        run: |
+          node -e "const version = require('./package.json').version; if (process.env.RELEASE_TAG !== version && process.env.RELEASE_TAG !== 'v' + version) { console.error('Release tag must match package version ' + version); process.exit(1); }"
       - run: npm ci
       - run: npm test
+      - run: npm run build
       - run: npm pack --dry-run
 
   npm:
@@ -39,8 +41,8 @@ jobs:
         with:
           node-version: '22'
           registry-url: 'https://registry.npmjs.org'
-          scope: '@micropasts'
       - run: npm ci
+      - run: npm run build
       - name: Publish to npm
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -68,6 +70,7 @@ jobs:
           registry-url: 'https://npm.pkg.github.com'
           scope: '@micropasts'
       - run: npm ci
+      - run: npm run build
       - name: Publish to GitHub Packages
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

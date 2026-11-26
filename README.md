@@ -4,6 +4,10 @@ Zero-dependency JavaScript web components for displaying compact summaries of II
 
 Package: `@micropasts/iiif-manifest-summary`
 
+## Screenshot
+
+![A screenshot of the demo](./images/screenshot-summary-iiif.png)
+
 ## Features
 
 - IIIF Presentation API v2 and v3 support
