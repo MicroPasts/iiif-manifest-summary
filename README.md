@@ -4,6 +4,35 @@ Zero-dependency JavaScript web components for displaying compact summaries of II
 
 Package: `@micropasts/iiif-manifest-summary`
 
+## Contents
+
+- [Screenshot](#screenshot)
+- [Features](#features)
+- [Installation](#installation)
+  - [npm](#npm)
+  - [CDN](#cdn)
+- [Components](#components)
+  - [Shadow DOM component](#iiif-manifest-summary--shadow-dom)
+  - [Tailwind/light DOM component](#iiif-manifest-summary-tw--tailwindlight-dom)
+  - [Display configuration](#display-configuration)
+- [Listening to external selection events](#listening-to-external-selection-events)
+- [Selection event](#selection-event)
+- [Public methods](#public-methods)
+- [JavaScript API](#javascript-api)
+  - [`summarizeManifest`](#summarizemanifestmanifest-manifesturi)
+  - [`fetchManifestSummary`](#fetchmanifestsummaryuri)
+  - [`seedManifest`](#seedmanifesturi-manifestjson)
+  - [`clearManifestCache`](#clearmanifestcache)
+  - [`emitManifestSelect`](#emitmanifestselecttarget-summary)
+  - [`copyTextToClipboard`](#copytexttoclipboardtext)
+  - [`stripHtml`](#striphtmlvalue)
+  - [`formatRightsLabel`](#formatrightslabelrights)
+- [Demo](#demo)
+- [Build](#build)
+- [Publishing](#publishing)
+- [Browser support](#browser-support)
+- [License](#license)
+
 ## Screenshot
 
 ![A screenshot of the demo](./images/screenshot-summary-iiif.png)
